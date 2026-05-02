@@ -145,7 +145,6 @@
     // ======================== تكامل Cloudflare Worker ========================
     const WORKER_URL = "https://home-diagnostic-worker.mouloud-kamali123.workers.dev";
     
-    // روابط الدفع من Lemon Squeezy
     const PAYMENT_LINKS = {
         single: "https://ai-moto-maintenance.lemonsqueezy.com/checkout/buy/7ca9be06-2004-440e-9598-e0917107058b",
         pack5: "https://ai-moto-maintenance.lemonsqueezy.com/checkout/buy/78d035d0-02a5-4eff-8b73-82c9b85fa3f2",
@@ -225,7 +224,6 @@
         window.open(url, "_blank");
     }
     
-    // معالجة العودة من الدفع
     async function processPaymentReturn() {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('payment') === 'success') {
@@ -253,7 +251,7 @@
             recommendationNormal: "🧹 قم بتنظيف الفلاتر ومراقبة الأداء.", recommendationCritical: "⚠️ أوقف الجهاز فوراً واطلب صيانة متخصصة.",
             smokeDetected: "🔥 علامات احتراق أو دخان أسود (خطر!)", waterLeak: "💧 تسرب ماء أو رطوبة زائدة.", imageNormal: "✅ الصورة طبيعية، لا تلف ظاهر.",
             micAbnormal: "⚠️ صوت صاخب أو صفير غير طبيعي!", micNormal: "✅ مستوى صوت طبيعي.",
-            selectDevice: "اختر جهازاً أولاً", emailSubject: "تقرير تشخيص الجهاز", noSummary: "لا توجد خلاصة", reportTitle: "تقرير تشخيص الجهاز", activateAll: "تفعيل الكل", collectingData: "جمع البيانات...", secondsLeft: "ثانية متبقية. يمكنك التنقل", diagComplete: "اكتمل التشخيص", diagReady: "التشخيص جاهز", voiceAdded: "تم إضافة الوصف", user: "المستخدم:", cancelled: "تم الإلغاء", exported: "تم التصدير", saved: "تم الحفظ", emailOpened: "تم فتح البريد", adminPlaceholder: "🔑 كود التفعيل MOULOUD2026", adminButton: "🛠️ مدير", choosePack: "اختر الحزمة"
+            selectDevice: "اختر جهازاً أولاً", emailSubject: "تقرير تشخيص الجهاز", noSummary: "لا توجد خلاصة", reportTitle: "تقرير تشخيص الجهاز", activateAll: "تفعيل الكل", collectingData: "جمع البيانات...", secondsLeft: "ثانية متبقية. يمكنك التنقل", diagComplete: "اكتمل التشخيص", diagReady: "التشخيص جاهز", voiceAdded: "تم إضافة الوصف", user: "المستخدم:", cancelled: "تم الإلغاء", exported: "تم التصدير", saved: "تم الحفظ", emailOpened: "تم فتح البريد", adminPlaceholder: "🔑 كود التفعيل MOULOUD2026", adminButton: "🛠️ مدير", choosePack: "اختر الحزمة", freeActive: "✅ تم تفعيل 3 تشخيصات مجانية"
         },
         en: {
             mainTitle: "🏠 AI Home Diagnostics", subTitle: "Smart Home Appliance Diagnosis", credits: "Credits", noCredits: "⚠️ Insufficient credits, buy a pack",
@@ -268,7 +266,7 @@
             recommendationNormal: "🧹 Clean filters and monitor performance.", recommendationCritical: "⚠️ Stop the device immediately and seek professional repair.",
             smokeDetected: "🔥 Signs of smoke or black exhaust (danger!)", waterLeak: "💧 Water leak or excessive moisture.", imageNormal: "✅ Normal image, no visible damage.",
             micAbnormal: "⚠️ Loud or screeching abnormal sound!", micNormal: "✅ Normal sound level.",
-            selectDevice: "Select a device first", emailSubject: "Home Appliance Diagnosis Report", noSummary: "No summary", reportTitle: "Home Appliance Diagnosis Report", activateAll: "Activate all", collectingData: "Collecting data...", secondsLeft: "seconds left. You can move around", diagComplete: "Diagnosis complete", diagReady: "Diagnosis ready", voiceAdded: "Voice added", user: "User:", cancelled: "Cancelled", exported: "Exported", saved: "Saved", emailOpened: "Email opened", adminPlaceholder: "🔑 Activation code MOULOUD2026", adminButton: "🛠️ Admin", choosePack: "Choose pack"
+            selectDevice: "Select a device first", emailSubject: "Home Appliance Diagnosis Report", noSummary: "No summary", reportTitle: "Home Appliance Diagnosis Report", activateAll: "Activate all", collectingData: "Collecting data...", secondsLeft: "seconds left. You can move around", diagComplete: "Diagnosis complete", diagReady: "Diagnosis ready", voiceAdded: "Voice added", user: "User:", cancelled: "Cancelled", exported: "Exported", saved: "Saved", emailOpened: "Email opened", adminPlaceholder: "🔑 Activation code MOULOUD2026", adminButton: "🛠️ Admin", choosePack: "Choose pack", freeActive: "✅ 3 free diagnoses activated"
         }
     };
     
@@ -336,7 +334,6 @@
     function activateFreePlan() {
         if (adminMode) return;
         currentCredits = 3;
-        // حفظ الرصيد في KV
         fetch(`${WORKER_URL}/add-credits`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -378,7 +375,7 @@
         } else showToast("❌ كود خاطئ");
     }
     
-    // دوال الحساسات (مبسطة للتشغيل)
+    // ------------------------ دوال الحساسات ------------------------
     let sensorsActive = { cam: false, mic: false, vib: false, temp: false };
     let mediaStreams = { cam: null, mic: null };
     let vibHandler = null;
@@ -468,6 +465,42 @@
         if(!sensorsActive.cam && !sensorsActive.mic && !sensorsActive.vib && !sensorsActive.temp) { document.getElementById("liveArea").innerHTML = `<div style="padding:12px;">🔌 ${t("waiting")}</div>`; }
     }
     
+    // دالة إيقاف جميع الحساسات (تُستخدم بعد التشخيص)
+    function stopAllSensors() {
+        // إيقاف الكاميرا
+        if (mediaStreams.cam) {
+            mediaStreams.cam.getTracks().forEach(t => t.stop());
+            mediaStreams.cam = null;
+            sensorsActive.cam = false;
+            document.getElementById("sensorCam").classList.remove("active");
+            analysisData.cameraDesc = t("cameraDisabled");
+        }
+        // إيقاف الميكروفون
+        if (mediaStreams.mic) {
+            mediaStreams.mic.getTracks().forEach(t => t.stop());
+            mediaStreams.mic = null;
+            sensorsActive.mic = false;
+            document.getElementById("sensorMic").classList.remove("active");
+            analysisData.micDesc = t("micDisabled");
+        }
+        // إيقاف الاهتزاز
+        if (vibHandler) {
+            window.removeEventListener("devicemotion", vibHandler);
+            vibHandler = null;
+            sensorsActive.vib = false;
+            document.getElementById("sensorVib").classList.remove("active");
+            analysisData.vibIntensity = 0;
+        }
+        // إيقاف الحرارة
+        if (sensorsActive.temp) {
+            sensorsActive.temp = false;
+            document.getElementById("sensorTemp").classList.remove("active");
+            document.getElementById("tempSliderArea").style.display = "none";
+        }
+        // تحديث واجهة المستخدم
+        document.getElementById("liveArea").innerHTML = `<div style="padding:12px;">🔌 ${t("waiting")}</div>`;
+    }
+    
     async function activateAllSensors() {
         document.getElementById("liveArea").innerHTML = "<div style='padding:12px;'>⏳ " + t("activateAll") + "...</div>";
         if(!sensorsActive.cam) await toggleCamera();
@@ -477,10 +510,11 @@
         setTimeout(() => { showToast("✅ " + t("activateAll")); }, 2000);
     }
     
-    // التشخيص السريع
+    // التشخيص السريع مع إيقاف الحساسات بعد الانتهاء
     async function quickDiagnose() {
         if(!currentDevice) { showToast(t("selectDevice")); return; }
         if (!adminMode && currentCredits <= 0) { showToast(t("noCredits")); return; }
+        showToast("🔍 جاري التشخيص...");
         
         const sensorData = {
             camera: analysisData.cameraDesc,
@@ -491,8 +525,7 @@
         
         let diagnosis;
         if (adminMode) {
-            // وضع المدير: تشخيص وهمي بدون خصم
-            diagnosis = `🧠 تشخيص تجريبي (وضع المدير):\n📷 ${analysisData.cameraDesc}\n🎤 ${analysisData.micDesc}\n📳 اهتزاز: ${(analysisData.vibIntensity*100).toFixed(0)}%\n🌡️ حرارة: ${analysisData.tempValue}°C\n🔧 التوصية: قم بتنظيف الفلاتر ومراقبة الأداء.`;
+            diagnosis = `🧠 تشخيص تجريبي (وضع المدير):\n📷 ${analysisData.cameraDesc}\n🎤 ${analysisData.micDesc}\n📳 اهتزاز: ${(analysisData.vibIntensity*100).toFixed(0)}%\n🌡️ حرارة: ${analysisData.tempValue}°C\n🔧 التوصية: قم بتنظيف الفلاتر.`;
             currentDiagnosisText = diagnosis;
             document.getElementById("reportBox").innerHTML = diagnosis.replace(/\n/g, "<br>");
             saveToHistory(diagnosis);
@@ -504,14 +537,20 @@
                 saveToHistory(diagnosis);
             }
         }
+        
+        // 🛑 إيقاف جميع الحساسات بعد التشخيص
+        stopAllSensors();
+        showToast("✅ تم إيقاف الحساسات تلقائياً");
     }
     
-    // التشخيص المتقدم
+    // التشخيص المتقدم مع إيقاف الحساسات بعد الانتهاء
     async function runAdvancedDiagnosis() {
         if(!currentDevice) { showToast(t("selectDevice")); return; }
         if (!adminMode && currentCredits <= 0) { showToast(t("noCredits")); return; }
         if(diagnosisInProgress) { showToast("التشخيص قيد التنفيذ"); return; }
         diagnosisInProgress = true;
+        
+        // تفعيل الحساسات إذا لم تكن مفعلة
         if(!sensorsActive.cam) await toggleCamera();
         if(!sensorsActive.mic) await toggleMic();
         if(!sensorsActive.vib) toggleVib();
@@ -547,7 +586,7 @@
                 
                 let diagnosis;
                 if (adminMode) {
-                    diagnosis = `🧠 تشخيص متقدم (وضع المدير):\n📷 ${analysisData.cameraDesc}\n🎤 ${analysisData.micDesc}\n📳 اهتزاز: ${(analysisData.vibIntensity*100).toFixed(0)}%\n🌡️ حرارة: ${analysisData.tempValue}°C\n🔧 التوصية: قم بتنظيف الفلاتر ومراقبة الأداء.`;
+                    diagnosis = `🧠 تشخيص متقدم (وضع المدير):\n📷 ${analysisData.cameraDesc}\n🎤 ${analysisData.micDesc}\n📳 اهتزاز: ${(analysisData.vibIntensity*100).toFixed(0)}%\n🌡️ حرارة: ${analysisData.tempValue}°C\n🔧 التوصية: قم بتنظيف الفلاتر.`;
                     currentDiagnosisText = diagnosis;
                     document.getElementById("reportBox").innerHTML = diagnosis.replace(/\n/g, "<br>");
                     saveToHistory(diagnosis);
@@ -563,6 +602,11 @@
                 
                 diagnosisInProgress = false;
                 if(statusDiv) statusDiv.innerText = "✅ " + t("diagComplete");
+                
+                // 🛑 إيقاف جميع الحساسات بعد انتهاء التشخيص المتقدم
+                stopAllSensors();
+                showToast("✅ تم إيقاف الحساسات تلقائياً");
+                
                 setTimeout(() => {
                     if(!diagnosisInProgress) document.getElementById("liveArea").innerHTML = `<div style="padding:12px;">🔌 ${t("diagReady")}</div>`;
                 }, 2000);
@@ -573,6 +617,7 @@
     function cancelDiagnosis() {
         if(advancedTimerInterval) clearInterval(advancedTimerInterval);
         diagnosisInProgress = false;
+        stopAllSensors();  // إيقاف جميع الحساسات عند الإلغاء
         document.getElementById("liveArea").innerHTML = `<div style="padding:12px;">🔌 ${t("cancelled")}</div>`;
         showToast(t("cancelled"));
     }
@@ -655,7 +700,7 @@
     function closeLab() {
         if(advancedTimerInterval) clearInterval(advancedTimerInterval);
         diagnosisInProgress = false;
-        stopSensor('camera'); stopSensor('mic'); stopSensor('vib'); stopSensor('temp');
+        stopAllSensors(); // إيقاف كل الحساسات عند الخروج من المختبر
         document.getElementById("deviceList").style.display = "block";
         document.getElementById("labPanel").style.display = "none";
         currentDevice = null;
@@ -687,14 +732,11 @@
         await processPaymentReturn();
         updateUI();
         
-        // تحقق من وجود وضع المدير سابقاً
         let adminStored = localStorage.getItem("home_admin");
         if (adminStored === "true") adminMode = true;
     }
     
     init();
-    
-    // ربط زر المدير
     document.getElementById("secretIcon").onclick = triggerAdmin;
 </script>
 </body>
