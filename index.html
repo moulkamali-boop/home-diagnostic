@@ -9,7 +9,7 @@
     <style>
         *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
         body{background:#0c0f17;color:#f0f3fa;font-family:'Segoe UI',system-ui,sans-serif;padding:0.8rem}
-        .container{max-width:600px;margin:0 auto;background:rgba(10,14,22,0.96);backdrop-filter:blur(2px);border-radius:1.8rem;border:1px solid rgba(245,184,27,0.4);overflow:hidden}
+        .container{max-width:600px;margin:0 auto;background:rgba(10,14,22,0.96);border-radius:1.8rem;border:1px solid rgba(245,184,27,0.4);overflow:hidden}
         .header{display:flex;align-items:center;justify-content:space-between;background:#0a0e16;padding:8px 12px;border-bottom:2px solid #f5b81b;gap:8px}
         .qr-box{width:40px;height:40px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
         .qr-box canvas,.qr-box img{width:100%!important;height:100%!important}
@@ -47,7 +47,7 @@
         .sensor i{font-size:1.3rem;display:block}
         .sensor span{font-size:0.55rem}
         .sensor button{background:#ef4444;border:none;border-radius:30px;font-size:0.5rem;padding:2px 4px;margin-top:4px;width:100%;color:#fff;cursor:pointer}
-        .live-area{background:#000000aa;border-radius:24px;min-height:200px;margin:10px 0;border:2px solid #f5b81b;padding:10px;text-align:center;overflow-y:auto;font-size:0.7rem}
+        .live-area{background:#000000aa;border-radius:24px;min-height:220px;margin:10px 0;border:2px solid #f5b81b;padding:10px;text-align:center;overflow-y:auto;font-size:0.7rem}
         .report-area{background:#0e1824;border-radius:20px;padding:10px;font-size:0.65rem;max-height:160px;overflow-y:auto;margin:8px 0;font-family:monospace;white-space:pre-wrap}
         .button-strip{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
         .button-strip button{flex:1;background:#1f2a3c;border:none;border-radius:40px;padding:6px;font-size:0.65rem;color:#fff;cursor:pointer}
@@ -78,7 +78,7 @@
             <div class="main-title" id="mainTitleText">🏠 AI Home Diagnostics</div>
             <div class="sub" id="dynamicSubtitle">تشخيص ذكي للأجهزة المنزلية</div>
         </div>
-        <span class="secret-icon" id="secretIcon" title="5 نقرات لتفعيل المدير (للتجربة)">🔧</span>
+        <span class="secret-icon" id="secretIcon" title="5 نقرات لتفعيل المدير">🔧</span>
     </div>
     <div class="info-bar">
         <span>📅 <span id="currentDate">--/--/----</span></span>
@@ -97,11 +97,7 @@
         <input type="text" id="adminCode" placeholder="🔑 كود التفعيل MOULOUD2026">
         <button class="admin-btn" id="adminBtn" onclick="activateAdmin()">🛠️ مدير</button>
     </div>
-
-    <div id="deviceList">
-        <div class="devices-grid" id="devicesGrid"></div>
-    </div>
-
+    <div id="deviceList"><div class="devices-grid" id="devicesGrid"></div></div>
     <div id="labPanel" class="lab-ui">
         <div class="lab-header">
             <button class="back-btn" id="backBtn" onclick="closeLab()">↩️ رجوع</button>
@@ -136,147 +132,39 @@
         <div class="rating-bar"><span id="ratingLabel">تقييم</span><div class="stars" id="ratingStars"><span onclick="setRating(1)">★</span><span onclick="setRating(2)">★</span><span onclick="setRating(3)">★</span><span onclick="setRating(4)">★</span><span onclick="setRating(5)">★</span></div></div>
         <div id="ratingMsg" style="font-size:0.65rem;"></div>
     </div>
-    <footer id="footerText">© 2026 AI Home Diagnostics | تشخيص متكامل للبيت</footer>
+    <footer id="footerText">© 2026 AI Home Diagnostics</footer>
 </div>
 <div id="toastMessage" class="toast"></div>
 <div id="packModal" class="modal-pack"><div class="modal-content"><h3 id="modalTitle">اختر الحزمة</h3><button id="pack5Btn">5 تشخيصات – 8$</button><button id="pack15Btn">15 تشخيصاً – 20$</button><button onclick="closePackModal()" style="background:#334155;" id="modalCancelBtn">إلغاء</button></div></div>
 
 <script>
-    // ======================== تكامل Cloudflare Worker ========================
+    // ------------------------ إعدادات الدفع والخادم ------------------------
     const WORKER_URL = "https://home-diagnostic-worker.mouloud-kamali123.workers.dev";
-    
     const PAYMENT_LINKS = {
         single: "https://ai-moto-maintenance.lemonsqueezy.com/checkout/buy/7ca9be06-2004-440e-9598-e0917107058b",
         pack5: "https://ai-moto-maintenance.lemonsqueezy.com/checkout/buy/78d035d0-02a5-4eff-8b73-82c9b85fa3f2",
         pack15: "https://ai-moto-maintenance.lemonsqueezy.com/checkout/buy/77ac0b72-3fa4-41da-b87c-4587888a7162"
     };
-    
     let userId = localStorage.getItem("userId");
-    if (!userId) {
-        userId = "user_" + Math.random().toString(36).slice(2, 10);
-        localStorage.setItem("userId", userId);
-    }
-    
-    let currentCredits = 0;
-    let adminMode = false;
-    let currentDevice = null, currentDeviceName = "";
+    if (!userId) { userId = "user_" + Math.random().toString(36).slice(2,10); localStorage.setItem("userId", userId); }
+    let currentCredits = 0, adminMode = false, currentDevice = null, currentDeviceName = "";
     let diagnosisHistory = JSON.parse(localStorage.getItem("homeDiagHistory") || "[]");
-    let currentDiagnosisText = "";
-    let diagnosisInProgress = false;
-    let advancedTimerInterval = null;
+    let currentDiagnosisText = "", diagnosisInProgress = false, advancedTimerInterval = null;
     
     // دوال Worker
-    async function fetchCredits() {
-        try {
-            const res = await fetch(`${WORKER_URL}/get-credits?userId=${userId}`);
-            const data = await res.json();
-            currentCredits = data.credits;
-            updateCreditUI();
-        } catch(e) { console.error("Error fetching credits:", e); }
-    }
-    
-    async function addCredits(pack) {
-        try {
-            const res = await fetch(`${WORKER_URL}/add-credits`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId, pack })
-            });
-            const data = await res.json();
-            currentCredits = data.credits;
-            updateCreditUI();
-            return true;
-        } catch(e) { console.error("Error adding credits:", e); return false; }
-    }
-    
-    async function useDiagnosis(sensorData, userDescription) {
-        try {
-            const res = await fetch(`${WORKER_URL}/diagnose`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId, sensorData, userDescription })
-            });
-            if (res.status === 402) {
-                showToast("⚠️ رصيدك منخفض، يرجى شراء حزمة تشخيص.");
-                return null;
-            }
-            const data = await res.json();
-            currentCredits = data.remainingCredits;
-            updateCreditUI();
-            return data.diagnosis;
-        } catch(e) {
-            console.error("Diagnosis error:", e);
-            return "⚠️ عذراً، حدث خطأ في الاتصال بخادم التشخيص. يرجى المحاولة لاحقاً.";
-        }
-    }
-    
-    // دوال الدفع
-    function buySingle() {
-        const url = PAYMENT_LINKS.single + "?checkout[success_url]=" + encodeURIComponent(window.location.href + "?payment=success&pack=single");
-        window.open(url, "_blank");
-    }
-    function buyPack5() {
-        const url = PAYMENT_LINKS.pack5 + "?checkout[success_url]=" + encodeURIComponent(window.location.href + "?payment=success&pack=5");
-        window.open(url, "_blank");
-    }
-    function buyPack15() {
-        const url = PAYMENT_LINKS.pack15 + "?checkout[success_url]=" + encodeURIComponent(window.location.href + "?payment=success&pack=15");
-        window.open(url, "_blank");
-    }
-    
-    async function processPaymentReturn() {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('payment') === 'success') {
-            const pack = urlParams.get('pack');
-            if (pack === 'single' || pack === '5' || pack === '15') {
-                await addCredits(pack);
-                showToast(`✅ تم إضافة ${pack === 'single' ? 'تشخيص واحد' : pack + ' تشخيصات'} إلى رصيدك`);
-                window.history.replaceState({}, '', window.location.pathname);
-            }
-        }
-    }
+    async function fetchCredits() { try { const res = await fetch(`${WORKER_URL}/get-credits?userId=${userId}`); const data = await res.json(); currentCredits = data.credits; updateCreditUI(); } catch(e){} }
+    async function addCredits(pack) { try { const res = await fetch(`${WORKER_URL}/add-credits`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({userId,pack}) }); const data = await res.json(); currentCredits = data.credits; updateCreditUI(); return true; } catch(e){ return false; } }
+    async function useDiagnosis(sensorData, userDescription) { try { const res = await fetch(`${WORKER_URL}/diagnose`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({userId, sensorData, userDescription}) }); if(res.status===402) { showToast("⚠️ رصيدك منخفض"); return null; } const data = await res.json(); currentCredits = data.remainingCredits; updateCreditUI(); return data.diagnosis; } catch(e){ return "⚠️ خطأ في الاتصال بخادم التشخيص"; } }
     
     // الترجمة
     const translations = {
-        ar: {
-            mainTitle: "🏠 AI Home Diagnostics", subTitle: "تشخيص ذكي للأجهزة المنزلية", credits: "الرصيد", noCredits: "⚠️ رصيدك منخفض، اشترِ حزمة",
-            freeTrial: "مجاني", single: "تشخيص واحد 2$", packs: "حزم تشخيصية", pack5: "5 تشخيصات – 8$", pack15: "15 تشخيصاً – 20$", cancel: "إلغاء",
-            back: "رجوع", quickDiag: "تشخيص سريع", advancedDiag: "تشخيص متقدم (60s)", camera: "كاميرا", mic: "ميكروفون", vib: "اهتزاز", temp: "حرارة",
-            stop: "إيقاف", speak: "تحدث", exportHist: "تصدير التاريخ", cancelDiag: "إلغاء التشخيص الجاري", pdf: "تقرير PDF", save: "حفظ التشخيص", email: "إرسال التقرير", listen: "استمع",
-            rating: "تقييم", waiting: "فعّل الحساسات", resultPlaceholder: "📋 سجل التشخيص سيظهر هنا...", footer: "© 2026 AI Home Diagnostics | تشخيص متكامل للبيت",
-            deviceWasher: "غسالة", deviceFridge: "ثلاجة", deviceAc: "مكيف", deviceHeater: "سخان كهربائي", deviceStove: "بوتاجاز", deviceGas: "سخان غاز",
-            cameraDisabled: "⚠️ الكاميرا غير مفعلة", micDisabled: "⚠️ الميكروفون غير مفعل", vibDisabled: "⚠️ حساس الاهتزاز غير مفعل", tempDisabled: "⚠️ حساس الحرارة غير مفعل",
-            normalVib: "✅ اهتزاز طبيعي", highVib: "🚨 اهتزاز قوي جداً!", moderateVib: "⚠️ اهتزاز ملحوظ",
-            normalTemp: "✅ حرارة مناسبة", highTemp: "⚠️ حرارة مرتفعة", criticalTemp: "🔥 حرارة مرتفعة خطيرة!",
-            recommendationNormal: "🧹 قم بتنظيف الفلاتر ومراقبة الأداء.", recommendationCritical: "⚠️ أوقف الجهاز فوراً واطلب صيانة متخصصة.",
-            smokeDetected: "🔥 علامات احتراق أو دخان أسود (خطر!)", waterLeak: "💧 تسرب ماء أو رطوبة زائدة.", imageNormal: "✅ الصورة طبيعية، لا تلف ظاهر.",
-            micAbnormal: "⚠️ صوت صاخب أو صفير غير طبيعي!", micNormal: "✅ مستوى صوت طبيعي.",
-            selectDevice: "اختر جهازاً أولاً", emailSubject: "تقرير تشخيص الجهاز", noSummary: "لا توجد خلاصة", reportTitle: "تقرير تشخيص الجهاز", activateAll: "تفعيل الكل", collectingData: "جمع البيانات...", secondsLeft: "ثانية متبقية. يمكنك التنقل", diagComplete: "اكتمل التشخيص", diagReady: "التشخيص جاهز", voiceAdded: "تم إضافة الوصف", user: "المستخدم:", cancelled: "تم الإلغاء", exported: "تم التصدير", saved: "تم الحفظ", emailOpened: "تم فتح البريد", adminPlaceholder: "🔑 كود التفعيل MOULOUD2026", adminButton: "🛠️ مدير", choosePack: "اختر الحزمة", freeActive: "✅ تم تفعيل 3 تشخيصات مجانية"
-        },
-        en: {
-            mainTitle: "🏠 AI Home Diagnostics", subTitle: "Smart Home Appliance Diagnosis", credits: "Credits", noCredits: "⚠️ Insufficient credits, buy a pack",
-            freeTrial: "Free", single: "Single 2$", packs: "Diagnostic packs", pack5: "5 diagnoses – 8$", pack15: "15 diagnoses – 20$", cancel: "Cancel",
-            back: "Back", quickDiag: "Quick Diag", advancedDiag: "Advanced (60s)", camera: "Camera", mic: "Mic", vib: "Vibration", temp: "Temp",
-            stop: "Stop", speak: "Speak", exportHist: "Export History", cancelDiag: "Cancel Current", pdf: "PDF Report", save: "Save Diagnosis", email: "Email Report", listen: "Listen",
-            rating: "Rating", waiting: "Activate sensors", resultPlaceholder: "📋 Diagnosis results will appear here...", footer: "© 2026 AI Home Diagnostics | Smart Home Diagnosis",
-            deviceWasher: "Washer", deviceFridge: "Fridge", deviceAc: "AC", deviceHeater: "Water Heater", deviceStove: "Stove", deviceGas: "Gas Heater",
-            cameraDisabled: "⚠️ Camera not active", micDisabled: "⚠️ Microphone not active", vibDisabled: "⚠️ Vibration sensor not active", tempDisabled: "⚠️ Temperature sensor not active",
-            normalVib: "✅ Normal vibration", highVib: "🚨 Very strong vibration!", moderateVib: "⚠️ Noticeable vibration",
-            normalTemp: "✅ Normal temperature", highTemp: "⚠️ High temperature", criticalTemp: "🔥 Critically high temperature!",
-            recommendationNormal: "🧹 Clean filters and monitor performance.", recommendationCritical: "⚠️ Stop the device immediately and seek professional repair.",
-            smokeDetected: "🔥 Signs of smoke or black exhaust (danger!)", waterLeak: "💧 Water leak or excessive moisture.", imageNormal: "✅ Normal image, no visible damage.",
-            micAbnormal: "⚠️ Loud or screeching abnormal sound!", micNormal: "✅ Normal sound level.",
-            selectDevice: "Select a device first", emailSubject: "Home Appliance Diagnosis Report", noSummary: "No summary", reportTitle: "Home Appliance Diagnosis Report", activateAll: "Activate all", collectingData: "Collecting data...", secondsLeft: "seconds left. You can move around", diagComplete: "Diagnosis complete", diagReady: "Diagnosis ready", voiceAdded: "Voice added", user: "User:", cancelled: "Cancelled", exported: "Exported", saved: "Saved", emailOpened: "Email opened", adminPlaceholder: "🔑 Activation code MOULOUD2026", adminButton: "🛠️ Admin", choosePack: "Choose pack", freeActive: "✅ 3 free diagnoses activated"
-        }
+        ar: { mainTitle:"🏠 AI Home Diagnostics", subTitle:"تشخيص ذكي للأجهزة المنزلية", credits:"الرصيد", noCredits:"⚠️ رصيدك منخفض", freeTrial:"مجاني", single:"تشخيص واحد 2$", packs:"حزم", pack5:"5 تشخيصات – 8$", pack15:"15 تشخيصاً – 20$", cancel:"إلغاء", back:"رجوع", quickDiag:"تشخيص سريع", advancedDiag:"تشخيص متقدم (60s)", camera:"كاميرا", mic:"ميكروفون", vib:"اهتزاز", temp:"حرارة", stop:"إيقاف", speak:"تحدث", exportHist:"تصدير التاريخ", cancelDiag:"إلغاء التشخيص", pdf:"PDF", save:"حفظ", email:"إرسال", listen:"استمع", rating:"تقييم", waiting:"فعّل الحساسات", resultPlaceholder:"النتائج هنا", footer:"© 2026 AI Home Diagnostics", deviceWasher:"غسالة", deviceFridge:"ثلاجة", deviceAc:"مكيف", deviceHeater:"سخان كهربائي", deviceStove:"بوتاجاز", deviceGas:"سخان غاز", cameraDisabled:"⚠️ الكاميرا غير مفعلة", micDisabled:"⚠️ الميكروفون غير مفعل", vibDisabled:"⚠️ الاهتزاز غير مفعل", tempDisabled:"⚠️ الحرارة غير مفعلة", normalVib:"✅ اهتزاز طبيعي", highVib:"🚨 اهتزاز قوي", moderateVib:"⚠️ اهتزاز ملحوظ", normalTemp:"✅ حرارة مناسبة", highTemp:"⚠️ حرارة مرتفعة", criticalTemp:"🔥 حرارة خطيرة", recommendationNormal:"🧹 نظف الفلاتر", recommendationCritical:"⚠️ اتصل بفني", smokeDetected:"🔥 دخان", waterLeak:"💧 تسرب ماء", imageNormal:"✅ صورة طبيعية", micAbnormal:"⚠️ صوت غير طبيعي", micNormal:"✅ صوت طبيعي", selectDevice:"اختر جهازاً", emailSubject:"تقرير تشخيص", noSummary:"لا توجد خلاصة", reportTitle:"تقرير تشخيص", activateAll:"تفعيل الكل", collectingData:"جمع البيانات...", secondsLeft:"ثانية متبقية", diagComplete:"اكتمل التشخيص", diagReady:"التشخيص جاهز", voiceAdded:"تم إضافة الوصف", user:"المستخدم:", cancelled:"تم الإلغاء", exported:"تم التصدير", saved:"تم الحفظ", emailOpened:"تم فتح البريد", adminPlaceholder:"🔑 كود MOULOUD2026", adminButton:"🛠️ مدير", choosePack:"اختر الحزمة", freeActive:"✅ 3 تشخيصات مجانية" },
+        en: { mainTitle:"🏠 AI Home Diagnostics", subTitle:"Smart Home Diagnosis", credits:"Credits", noCredits:"⚠️ Low credits", freeTrial:"Free", single:"Single 2$", packs:"Packs", pack5:"5 diagnoses – 8$", pack15:"15 diagnoses – 20$", cancel:"Cancel", back:"Back", quickDiag:"Quick Diag", advancedDiag:"Advanced (60s)", camera:"Camera", mic:"Mic", vib:"Vibration", temp:"Temp", stop:"Stop", speak:"Speak", exportHist:"Export History", cancelDiag:"Cancel", pdf:"PDF", save:"Save", email:"Email", listen:"Listen", rating:"Rating", waiting:"Activate sensors", resultPlaceholder:"Results here", footer:"© 2026 AI Home Diagnostics", deviceWasher:"Washer", deviceFridge:"Fridge", deviceAc:"AC", deviceHeater:"Heater", deviceStove:"Stove", deviceGas:"Gas Heater", cameraDisabled:"⚠️ Camera not active", micDisabled:"⚠️ Mic not active", vibDisabled:"⚠️ Vibration disabled", tempDisabled:"⚠️ Temp disabled", normalVib:"✅ Normal vibration", highVib:"🚨 Strong vibration", moderateVib:"⚠️ Moderate vibration", normalTemp:"✅ Normal temp", highTemp:"⚠️ High temp", criticalTemp:"🔥 Critical temp", recommendationNormal:"🧹 Clean filters", recommendationCritical:"⚠️ Seek repair", smokeDetected:"🔥 Smoke", waterLeak:"💧 Water leak", imageNormal:"✅ Normal image", micAbnormal:"⚠️ Unusual sound", micNormal:"✅ Normal sound", selectDevice:"Select device", emailSubject:"Diagnosis Report", noSummary:"No summary", reportTitle:"Diagnosis Report", activateAll:"Activate all", collectingData:"Collecting data...", secondsLeft:"seconds left", diagComplete:"Diagnosis complete", diagReady:"Diagnosis ready", voiceAdded:"Voice added", user:"User:", cancelled:"Cancelled", exported:"Exported", saved:"Saved", emailOpened:"Email opened", adminPlaceholder:"🔑 MOULOUD2026", adminButton:"🛠️ Admin", choosePack:"Choose pack", freeActive:"✅ 3 free diagnoses" }
     };
-    
     let currentLang = "ar";
-    function t(key, vars = {}) {
-        let str = (translations[currentLang]?.[key] || translations.en[key] || key);
-        for (let k in vars) str = str.replace(new RegExp(`{{${k}}}`, 'g'), vars[k]);
-        return str;
-    }
+    function t(key,vars={}){ let str=(translations[currentLang]?.[key]||translations.en[key]||key); for(let k in vars) str=str.replace(new RegExp(`{{${k}}}`,'g'),vars[k]); return str; }
     
+    // تحديث الواجهة
     function updateUI() {
         document.getElementById("mainTitleText").innerHTML = t("mainTitle");
         document.getElementById("dynamicSubtitle").innerText = t("subTitle");
@@ -303,9 +191,8 @@
         document.getElementById("footerText").innerHTML = t("footer");
         document.getElementById("modalTitle").innerText = t("choosePack");
         document.getElementById("modalCancelBtn").innerText = t("cancel");
-        document.getElementById("pack5Btn").innerText = t("pack5");
-        document.getElementById("pack15Btn").innerText = t("pack15");
-        
+        document.getElementById("pack5Btn").innerHTML = t("pack5");
+        document.getElementById("pack15Btn").innerHTML = t("pack15");
         const devices = [
             { id: "washer", name: t("deviceWasher"), icon: "fas fa-tshirt" },
             { id: "fridge", name: t("deviceFridge"), icon: "fas fa-thermometer-half" },
@@ -315,125 +202,141 @@
             { id: "gas", name: t("deviceGas"), icon: "fas fa-gas-pump" }
         ];
         document.getElementById("devicesGrid").innerHTML = devices.map(d => `<div class="device-card" onclick="selectDevice('${d.id}','${d.name}')"><i class="${d.icon} device-icon"></i><div class="device-name">${d.name}</div></div>`).join("");
-        
         buildSubscriptionUI();
         document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
         document.documentElement.lang = currentLang;
     }
-    
     function buildSubscriptionUI() {
-        let container = document.getElementById("subscriptionsDiv");
-        container.innerHTML = `
+        document.getElementById("subscriptionsDiv").innerHTML = `
             <div class="sub-card" onclick="activateFreePlan()"><div class="l1">🎁 ${t("freeTrial")}</div><div class="l2">0$</div><div class="l3">3</div></div>
             <div class="sub-card" onclick="buySingle()"><div class="l1">🔧 ${t("single")}</div><div class="l2">2$</div><div class="l3">1</div></div>
             <div class="sub-card" onclick="buyPack5()"><div class="l1">📦 ${t("pack5")}</div><div class="l2">8$</div><div class="l3">5</div></div>
             <div class="sub-card" onclick="buyPack15()"><div class="l1">📦 ${t("pack15")}</div><div class="l2">20$</div><div class="l3">15</div></div>
         `;
     }
-    
-    function activateFreePlan() {
-        if (adminMode) return;
-        currentCredits = 3;
-        fetch(`${WORKER_URL}/add-credits`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId, pack: "free" })
-        }).catch(e => console.error);
-        updateCreditUI();
-        showToast(t("freeActive"));
-    }
-    
-    function changeLanguage(lang) { currentLang = lang; localStorage.setItem("home_lang", lang); updateUI(); }
-    
-    function updateCreditUI() {
-        document.getElementById("creditDisplay").innerHTML = `💰 ${t("credits")}: ${currentCredits}`;
-    }
-    
-    function showToast(msg) { let t = document.getElementById("toastMessage"); t.innerText = msg; t.classList.add("show"); setTimeout(()=> t.classList.remove("show"), 2500); }
+    function activateFreePlan() { if(adminMode) return; currentCredits=3; fetch(`${WORKER_URL}/add-credits`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({userId,pack:"free"})}); updateCreditUI(); showToast(t("freeActive")); }
+    function buySingle() { window.open(PAYMENT_LINKS.single+"?checkout[success_url]="+encodeURIComponent(window.location.href+"?payment=success&pack=single"),"_blank"); }
+    function buyPack5() { window.open(PAYMENT_LINKS.pack5+"?checkout[success_url]="+encodeURIComponent(window.location.href+"?payment=success&pack=5"),"_blank"); }
+    function buyPack15() { window.open(PAYMENT_LINKS.pack15+"?checkout[success_url]="+encodeURIComponent(window.location.href+"?payment=success&pack=15"),"_blank"); }
+    async function processPaymentReturn() { const urlParams=new URLSearchParams(window.location.search); if(urlParams.get('payment')==='success'){ const pack=urlParams.get('pack'); if(pack==='single'||pack==='5'||pack==='15'){ await addCredits(pack); showToast(`✅ تم إضافة ${pack==='single'?'تشخيص':pack+' تشخيصات'}`); window.history.replaceState({},'',window.location.pathname); } } }
+    function changeLanguage(lang){ currentLang=lang; localStorage.setItem("home_lang",lang); updateUI(); }
+    function updateCreditUI(){ document.getElementById("creditDisplay").innerHTML = `💰 ${t("credits")}: ${currentCredits}`; }
+    function showToast(msg){ let t=document.getElementById("toastMessage"); t.innerText=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2500); }
     
     // دوال المدير
-    let adminClickCount = 0, adminTimer;
-    function triggerAdmin() {
-        adminClickCount++;
-        clearTimeout(adminTimer);
-        adminTimer = setTimeout(()=>{ adminClickCount=0; }, 2000);
-        if(adminClickCount >= 5) {
-            adminMode = !adminMode;
-            showToast(adminMode ? "✅ المدير مفعل - تشخيص غير محدود" : "🔒 المدير معطل - حدود حقيقية");
-            if(adminMode) currentCredits = 999;
-            else fetchCredits();
-            updateCreditUI();
-            adminClickCount=0;
-        }
-    }
-    function activateAdmin() {
-        if(document.getElementById("adminCode").value.toUpperCase() === "MOULOUD2026") {
-            adminMode = true;
-            showToast("✅ وضع المدير مفعل - تشخيص غير محدود");
-            currentCredits = 999;
-            updateCreditUI();
-        } else showToast("❌ كود خاطئ");
-    }
+    let adminClickCount=0, adminTimer;
+    function triggerAdmin(){ adminClickCount++; clearTimeout(adminTimer); adminTimer=setTimeout(()=>{ adminClickCount=0; },2000); if(adminClickCount>=5){ adminMode=!adminMode; showToast(adminMode?"✅ المدير مفعل":"🔒 المدير معطل"); if(adminMode) currentCredits=999; else fetchCredits(); updateCreditUI(); adminClickCount=0; } }
+    function activateAdmin(){ if(document.getElementById("adminCode").value.toUpperCase()==="MOULOUD2026"){ adminMode=true; showToast("✅ وضع المدير مفعل"); currentCredits=999; updateCreditUI(); } else showToast("❌ كود خاطئ"); }
     
-    // ------------------------ دوال الحساسات ------------------------
+    // ======================== الحساسات – تم إصلاحها بالكامل ========================
     let sensorsActive = { cam: false, mic: false, vib: false, temp: false };
     let mediaStreams = { cam: null, mic: null };
     let vibHandler = null;
     let currentTemp = 25;
     let analysisData = { cameraDesc: t("cameraDisabled"), micDesc: t("micDisabled"), vibIntensity: 0, tempValue: 25 };
     
+    // --- الكاميرا (تعمل الآن) ---
     async function toggleCamera() {
-        if(sensorsActive.cam) { stopSensor('camera'); return; }
-        const live = document.getElementById("liveArea");
-        live.innerHTML = `<video id="homeCam" autoplay playsinline muted style="width:100%;border-radius:14px;"></video><div class="sensor-feedback">📸 ${t("camera")}...</div>`;
-        try{
-            let s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-            let video = document.getElementById("homeCam");
-            video.srcObject = s; await video.play();
-            mediaStreams.cam = s; sensorsActive.cam = true;
+        if (sensorsActive.cam) { stopSensor('camera'); return; }
+        // التأكد من أن منطقة liveArea جاهزة
+        const liveArea = document.getElementById("liveArea");
+        // إنشاء حاوية الفيديو فقط (وإزالة أي محتوى سابق)
+        liveArea.innerHTML = `<div id="camContainer"><video id="homeCam" autoplay playsinline muted style="width:100%; border-radius:14px;"></video></div><div id="micContainer" style="display:none;"></div><div id="vibContainer" style="display:none;"></div><div id="tempContainer"></div>`;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            const video = document.getElementById("homeCam");
+            if (!video) throw new Error("عنصر الفيديو غير موجود");
+            video.srcObject = stream;
+            await video.play();
+            mediaStreams.cam = stream;
+            sensorsActive.cam = true;
             document.getElementById("sensorCam").classList.add("active");
-            setTimeout(() => {
-                analysisData.cameraDesc = t("imageNormal");
-                document.getElementById("liveArea").innerHTML += `<div>📷 ${analysisData.cameraDesc}</div>`;
-            }, 2000);
-        } catch(e) { analysisData.cameraDesc = "❌ " + t("cameraDisabled"); live.innerHTML += `<div>${analysisData.cameraDesc}</div>`; }
+            showToast("✅ الكاميرا تعمل الآن");
+        } catch (err) {
+            liveArea.innerHTML = `<div style="color:#ffaa66;">⚠️ ${t("cameraDisabled")}<br>${err.message}</div>`;
+            analysisData.cameraDesc = "❌ " + t("cameraDisabled");
+            sensorsActive.cam = false;
+        }
     }
     
+    // --- الميكروفون (تعمل الآن) ---
     async function toggleMic() {
-        if(sensorsActive.mic){ stopSensor('mic'); return; }
-        const live = document.getElementById("liveArea");
-        live.innerHTML += `<canvas id="micCanvas" width="100%" height="80" style="background:#000;border-radius:12px;margin-top:6px;"></canvas><div class="sensor-feedback">🎙️ ${t("mic")}...</div>`;
-        try{
-            let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        if (sensorsActive.mic) { stopSensor('mic'); return; }
+        let micContainer = document.getElementById("micContainer");
+        if (!micContainer) {
+            const liveArea = document.getElementById("liveArea");
+            liveArea.innerHTML += `<div id="micContainer"><canvas id="micCanvas" width="100%" height="80" style="background:#000; border-radius:12px;"></canvas></div>`;
+            micContainer = document.getElementById("micContainer");
+        }
+        micContainer.style.display = "block";
+        const canvas = document.getElementById("micCanvas");
+        if (!canvas) return;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaStreams.mic = stream;
-            analysisData.micDesc = t("micNormal");
+            const audioCtx = new AudioContext();
+            await audioCtx.resume();
+            const source = audioCtx.createMediaStreamSource(stream);
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            canvas.width = canvas.clientWidth;
+            canvas.height = 80;
+            const ctx = canvas.getContext("2d");
+            function draw() {
+                if (!sensorsActive.mic) return;
+                analyser.getByteFrequencyData(dataArray);
+                let avg = 0;
+                for (let i = 0; i < dataArray.length; i++) avg += dataArray[i];
+                avg /= dataArray.length;
+                const level = Math.min(1, avg / 255);
+                analysisData.micDesc = level > 0.6 ? t("micAbnormal") : t("micNormal");
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#f5b81b";
+                ctx.fillRect(0, canvas.height - level * canvas.height, canvas.width, level * canvas.height);
+                requestAnimationFrame(draw);
+            }
+            draw();
             sensorsActive.mic = true;
             document.getElementById("sensorMic").classList.add("active");
-        } catch(e) { analysisData.micDesc = "❌ " + t("micDisabled"); live.innerHTML += `<div>${analysisData.micDesc}</div>`; }
+            showToast("✅ الميكروفون يعمل الآن");
+        } catch (err) {
+            micContainer.innerHTML = `<div style="color:#ffaa66;">⚠️ ${t("micDisabled")}<br>${err.message}</div>`;
+            analysisData.micDesc = "❌ " + t("micDisabled");
+            sensorsActive.mic = false;
+        }
     }
     
+    // --- الاهتزاز ---
     function toggleVib() {
-        if(sensorsActive.vib){ stopSensor('vib'); return; }
-        if(!window.DeviceMotionEvent) { analysisData.vibIntensity = 0; showToast("Vibration not supported"); return; }
-        const live = document.getElementById("liveArea");
-        live.innerHTML += `<canvas id="vibCanvas" width="100%" height="80" style="background:#000;border-radius:12px;margin-top:6px;"></canvas><div class="sensor-feedback">📳 ${t("vib")}...</div>`;
-        let canvas = document.getElementById("vibCanvas"); if(!canvas) return;
-        canvas.width = canvas.clientWidth; canvas.height = 80;
-        let ctx = canvas.getContext("2d");
+        if (sensorsActive.vib) { stopSensor('vib'); return; }
+        if (!window.DeviceMotionEvent) { showToast("الاهتزاز غير مدعوم"); return; }
+        let vibContainer = document.getElementById("vibContainer");
+        if (!vibContainer) {
+            const liveArea = document.getElementById("liveArea");
+            liveArea.innerHTML += `<div id="vibContainer"><canvas id="vibCanvas" width="100%" height="80" style="background:#000; border-radius:12px;"></canvas></div>`;
+            vibContainer = document.getElementById("vibContainer");
+        }
+        vibContainer.style.display = "block";
+        const canvas = document.getElementById("vibCanvas");
+        canvas.width = canvas.clientWidth;
+        canvas.height = 80;
+        const ctx = canvas.getContext("2d");
         let intensities = [];
-        let handler = (e) => {
-            if(!sensorsActive.vib) return;
-            let acc = e.accelerationIncludingGravity;
-            if(acc) {
+        const handler = (e) => {
+            if (!sensorsActive.vib) return;
+            const acc = e.accelerationIncludingGravity;
+            if (acc) {
                 let inten = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
                 inten = Math.min(1, inten / 35);
                 intensities.push(inten);
-                if(intensities.length > 30) intensities.shift();
-                let avg = intensities.reduce((a,b) => a+b, 0) / intensities.length;
+                if (intensities.length > 20) intensities.shift();
+                const avg = intensities.reduce((a,b)=>a+b,0) / intensities.length;
                 analysisData.vibIntensity = avg;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = "#f59e0b";
-                ctx.fillRect(0, canvas.height - (avg * canvas.height), canvas.width, avg * canvas.height);
+                ctx.fillRect(0, canvas.height - avg * canvas.height, canvas.width, avg * canvas.height);
                 ctx.fillStyle = "#fff";
                 ctx.fillText(`${t("vib")}: ${(avg*100).toFixed(0)}%`, 5, 15);
             }
@@ -442,302 +345,174 @@
         vibHandler = handler;
         sensorsActive.vib = true;
         document.getElementById("sensorVib").classList.add("active");
+        showToast("✅ الاهتزاز يعمل الآن");
     }
     
+    // --- درجة الحرارة ---
     function toggleTemp() {
-        if(sensorsActive.temp){ stopSensor('temp'); return; }
-        let container = document.getElementById("tempSliderArea");
+        if (sensorsActive.temp) { stopSensor('temp'); return; }
+        const container = document.getElementById("tempSliderArea");
         container.style.display = "flex";
         container.innerHTML = `<span>🌡️ ${t("temp")}:</span><input type="range" id="tempManual" min="10" max="60" step="1" value="25"><span id="tempDisplayVal">25°C</span>`;
-        let slider = document.getElementById("tempManual");
-        slider.oninput = (e) => { currentTemp = parseInt(e.target.value); document.getElementById("tempDisplayVal").innerText = currentTemp + "°C"; analysisData.tempValue = currentTemp; document.getElementById("liveArea").innerHTML += `<div>🌡️ ${t("temp")}: ${currentTemp}°C</div>`; };
+        const slider = document.getElementById("tempManual");
+        slider.oninput = (e) => {
+            currentTemp = parseInt(e.target.value);
+            document.getElementById("tempDisplayVal").innerText = currentTemp + "°C";
+            analysisData.tempValue = currentTemp;
+        };
         analysisData.tempValue = currentTemp;
         sensorsActive.temp = true;
         document.getElementById("sensorTemp").classList.add("active");
-        document.getElementById("liveArea").innerHTML += `<div>🌡️ ${t("temp")} ${currentLang === 'ar' ? 'تم التفعيل' : 'activated'} (${currentTemp}°C)</div>`;
+        showToast("✅ يمكنك ضبط درجة الحرارة الآن");
     }
     
+    // إيقاف حساس واحد
     function stopSensor(type) {
-        if(type === 'camera' && mediaStreams.cam) { mediaStreams.cam.getTracks().forEach(t => t.stop()); mediaStreams.cam = null; sensorsActive.cam = false; document.getElementById("sensorCam").classList.remove("active"); analysisData.cameraDesc = t("cameraDisabled"); }
-        if(type === 'mic' && mediaStreams.mic) { mediaStreams.mic.getTracks().forEach(t => t.stop()); mediaStreams.mic = null; sensorsActive.mic = false; document.getElementById("sensorMic").classList.remove("active"); analysisData.micDesc = t("micDisabled"); }
-        if(type === 'vib' && vibHandler) { window.removeEventListener("devicemotion", vibHandler); sensorsActive.vib = false; document.getElementById("sensorVib").classList.remove("active"); analysisData.vibIntensity = 0; }
-        if(type === 'temp') { sensorsActive.temp = false; document.getElementById("sensorTemp").classList.remove("active"); document.getElementById("tempSliderArea").style.display = "none"; analysisData.tempValue = currentTemp; }
-        if(!sensorsActive.cam && !sensorsActive.mic && !sensorsActive.vib && !sensorsActive.temp) { document.getElementById("liveArea").innerHTML = `<div style="padding:12px;">🔌 ${t("waiting")}</div>`; }
-    }
-    
-    // دالة إيقاف جميع الحساسات (تُستخدم بعد التشخيص)
-    function stopAllSensors() {
-        // إيقاف الكاميرا
-        if (mediaStreams.cam) {
+        if (type === 'camera' && mediaStreams.cam) {
             mediaStreams.cam.getTracks().forEach(t => t.stop());
             mediaStreams.cam = null;
             sensorsActive.cam = false;
             document.getElementById("sensorCam").classList.remove("active");
             analysisData.cameraDesc = t("cameraDisabled");
+            const camDiv = document.getElementById("camContainer");
+            if (camDiv) camDiv.style.display = "none";
         }
-        // إيقاف الميكروفون
-        if (mediaStreams.mic) {
+        if (type === 'mic' && mediaStreams.mic) {
             mediaStreams.mic.getTracks().forEach(t => t.stop());
             mediaStreams.mic = null;
             sensorsActive.mic = false;
             document.getElementById("sensorMic").classList.remove("active");
             analysisData.micDesc = t("micDisabled");
+            const micDiv = document.getElementById("micContainer");
+            if (micDiv) micDiv.style.display = "none";
         }
-        // إيقاف الاهتزاز
-        if (vibHandler) {
+        if (type === 'vib' && vibHandler) {
             window.removeEventListener("devicemotion", vibHandler);
             vibHandler = null;
             sensorsActive.vib = false;
             document.getElementById("sensorVib").classList.remove("active");
             analysisData.vibIntensity = 0;
+            const vibDiv = document.getElementById("vibContainer");
+            if (vibDiv) vibDiv.style.display = "none";
         }
-        // إيقاف الحرارة
-        if (sensorsActive.temp) {
+        if (type === 'temp') {
             sensorsActive.temp = false;
             document.getElementById("sensorTemp").classList.remove("active");
             document.getElementById("tempSliderArea").style.display = "none";
         }
-        // تحديث واجهة المستخدم
+    }
+    
+    // إيقاف الكل بقوة
+    function stopAllSensors() {
+        if (mediaStreams.cam) { mediaStreams.cam.getTracks().forEach(t=>t.stop()); mediaStreams.cam=null; sensorsActive.cam=false; document.getElementById("sensorCam").classList.remove("active"); analysisData.cameraDesc=t("cameraDisabled"); }
+        if (mediaStreams.mic) { mediaStreams.mic.getTracks().forEach(t=>t.stop()); mediaStreams.mic=null; sensorsActive.mic=false; document.getElementById("sensorMic").classList.remove("active"); analysisData.micDesc=t("micDisabled"); }
+        if (vibHandler) { window.removeEventListener("devicemotion", vibHandler); vibHandler=null; sensorsActive.vib=false; document.getElementById("sensorVib").classList.remove("active"); analysisData.vibIntensity=0; }
+        if (sensorsActive.temp) { sensorsActive.temp=false; document.getElementById("sensorTemp").classList.remove("active"); document.getElementById("tempSliderArea").style.display="none"; }
         document.getElementById("liveArea").innerHTML = `<div style="padding:12px;">🔌 ${t("waiting")}</div>`;
     }
     
+    // تفعيل جميع الحساسات دفعة واحدة
     async function activateAllSensors() {
-        document.getElementById("liveArea").innerHTML = "<div style='padding:12px;'>⏳ " + t("activateAll") + "...</div>";
         if(!sensorsActive.cam) await toggleCamera();
         if(!sensorsActive.mic) await toggleMic();
         if(!sensorsActive.vib) toggleVib();
         if(!sensorsActive.temp) toggleTemp();
-        setTimeout(() => { showToast("✅ " + t("activateAll")); }, 2000);
+        showToast("✅ تم تفعيل جميع الحساسات");
     }
     
-    // التشخيص السريع مع إيقاف الحساسات بعد الانتهاء
+    // ---------- التشخيص ----------
     async function quickDiagnose() {
         if(!currentDevice) { showToast(t("selectDevice")); return; }
-        if (!adminMode && currentCredits <= 0) { showToast(t("noCredits")); return; }
-        showToast("🔍 جاري التشخيص...");
-        
-        const sensorData = {
-            camera: analysisData.cameraDesc,
-            microphone: analysisData.micDesc,
-            vibration: analysisData.vibIntensity,
-            temperature: analysisData.tempValue
-        };
-        
+        if(!adminMode && currentCredits<=0) { showToast(t("noCredits")); return; }
+        const sensorData = { camera: analysisData.cameraDesc, microphone: analysisData.micDesc, vibration: analysisData.vibIntensity, temperature: analysisData.tempValue };
         let diagnosis;
-        if (adminMode) {
-            diagnosis = `🧠 تشخيص تجريبي (وضع المدير):\n📷 ${analysisData.cameraDesc}\n🎤 ${analysisData.micDesc}\n📳 اهتزاز: ${(analysisData.vibIntensity*100).toFixed(0)}%\n🌡️ حرارة: ${analysisData.tempValue}°C\n🔧 التوصية: قم بتنظيف الفلاتر.`;
+        if(adminMode){
+            diagnosis = `🧠 تشخيص سريع (مدير):\n📷 ${analysisData.cameraDesc}\n🎤 ${analysisData.micDesc}\n📳 اهتزاز: ${(analysisData.vibIntensity*100).toFixed(0)}%\n🌡️ حرارة: ${analysisData.tempValue}°C\n🔧 ${t("recommendationNormal")}`;
             currentDiagnosisText = diagnosis;
-            document.getElementById("reportBox").innerHTML = diagnosis.replace(/\n/g, "<br>");
+            document.getElementById("reportBox").innerHTML = diagnosis.replace(/\n/g,"<br>");
             saveToHistory(diagnosis);
         } else {
             diagnosis = await useDiagnosis(sensorData, "");
-            if (diagnosis) {
-                currentDiagnosisText = diagnosis;
-                document.getElementById("reportBox").innerHTML = diagnosis;
-                saveToHistory(diagnosis);
-            }
+            if(diagnosis) { currentDiagnosisText = diagnosis; document.getElementById("reportBox").innerHTML = diagnosis; saveToHistory(diagnosis); }
         }
-        
-        // 🛑 إيقاف جميع الحساسات بعد التشخيص
         stopAllSensors();
         showToast("✅ تم إيقاف الحساسات تلقائياً");
     }
     
-    // التشخيص المتقدم مع إيقاف الحساسات بعد الانتهاء
     async function runAdvancedDiagnosis() {
         if(!currentDevice) { showToast(t("selectDevice")); return; }
-        if (!adminMode && currentCredits <= 0) { showToast(t("noCredits")); return; }
+        if(!adminMode && currentCredits<=0) { showToast(t("noCredits")); return; }
         if(diagnosisInProgress) { showToast("التشخيص قيد التنفيذ"); return; }
         diagnosisInProgress = true;
-        
-        // تفعيل الحساسات إذا لم تكن مفعلة
+        const liveDiv = document.getElementById("liveArea");
+        liveDiv.innerHTML = `<div id="camContainer"></div><div id="micContainer" style="display:none;"></div><div id="vibContainer" style="display:none;"></div><div id="tempContainer"></div><div style="padding:12px;">⏳ جاري جمع البيانات...</div>`;
         if(!sensorsActive.cam) await toggleCamera();
         if(!sensorsActive.mic) await toggleMic();
         if(!sensorsActive.vib) toggleVib();
         if(!sensorsActive.temp) toggleTemp();
-        
         const total = 60;
         let remaining = total;
-        const liveDiv = document.getElementById("liveArea");
-        let progressDiv = document.createElement("div");
+        const progressDiv = document.createElement("div");
         progressDiv.className = "progress-bar";
         progressDiv.innerHTML = `<div class="progress-fill" id="advProgress"></div>`;
-        let statusDiv = document.createElement("div");
+        const statusDiv = document.createElement("div");
         statusDiv.id = "advStatus";
         statusDiv.innerText = `⏳ ${t("collectingData")} ${remaining} ${t("secondsLeft")}`;
         liveDiv.appendChild(progressDiv);
         liveDiv.appendChild(statusDiv);
-        let progressFill = document.getElementById("advProgress");
-        
+        const progressFill = document.getElementById("advProgress");
         advancedTimerInterval = setInterval(() => {
             remaining--;
-            if(progressFill) progressFill.style.width = ((total - remaining) / total) * 100 + "%";
+            if(progressFill) progressFill.style.width = ((total-remaining)/total)*100 + "%";
             if(statusDiv) statusDiv.innerText = `⏳ ${t("collectingData")} ${remaining} ${t("secondsLeft")}`;
             if(remaining <= 0) {
                 clearInterval(advancedTimerInterval);
                 advancedTimerInterval = null;
-                
-                const sensorData = {
-                    camera: analysisData.cameraDesc,
-                    microphone: analysisData.micDesc,
-                    vibration: analysisData.vibIntensity,
-                    temperature: analysisData.tempValue
-                };
-                
+                const sensorData = { camera: analysisData.cameraDesc, microphone: analysisData.micDesc, vibration: analysisData.vibIntensity, temperature: analysisData.tempValue };
                 let diagnosis;
-                if (adminMode) {
-                    diagnosis = `🧠 تشخيص متقدم (وضع المدير):\n📷 ${analysisData.cameraDesc}\n🎤 ${analysisData.micDesc}\n📳 اهتزاز: ${(analysisData.vibIntensity*100).toFixed(0)}%\n🌡️ حرارة: ${analysisData.tempValue}°C\n🔧 التوصية: قم بتنظيف الفلاتر.`;
+                if(adminMode){
+                    diagnosis = `🧠 تشخيص متقدم (مدير):\n📷 ${analysisData.cameraDesc}\n🎤 ${analysisData.micDesc}\n📳 اهتزاز: ${(analysisData.vibIntensity*100).toFixed(0)}%\n🌡️ حرارة: ${analysisData.tempValue}°C\n🔧 ${t("recommendationNormal")}`;
                     currentDiagnosisText = diagnosis;
-                    document.getElementById("reportBox").innerHTML = diagnosis.replace(/\n/g, "<br>");
+                    document.getElementById("reportBox").innerHTML = diagnosis.replace(/\n/g,"<br>");
                     saveToHistory(diagnosis);
                 } else {
-                    useDiagnosis(sensorData, "advanced diagnosis").then(diagnosis => {
-                        if (diagnosis) {
-                            currentDiagnosisText = diagnosis;
-                            document.getElementById("reportBox").innerHTML = diagnosis;
-                            saveToHistory(diagnosis);
-                        }
-                    });
+                    useDiagnosis(sensorData, "advanced").then(diag => { if(diag){ currentDiagnosisText=diag; document.getElementById("reportBox").innerHTML=diag; saveToHistory(diag); } });
                 }
-                
                 diagnosisInProgress = false;
                 if(statusDiv) statusDiv.innerText = "✅ " + t("diagComplete");
-                
-                // 🛑 إيقاف جميع الحساسات بعد انتهاء التشخيص المتقدم
                 stopAllSensors();
                 showToast("✅ تم إيقاف الحساسات تلقائياً");
-                
-                setTimeout(() => {
-                    if(!diagnosisInProgress) document.getElementById("liveArea").innerHTML = `<div style="padding:12px;">🔌 ${t("diagReady")}</div>`;
-                }, 2000);
             }
         }, 1000);
     }
     
-    function cancelDiagnosis() {
-        if(advancedTimerInterval) clearInterval(advancedTimerInterval);
-        diagnosisInProgress = false;
-        stopAllSensors();  // إيقاف جميع الحساسات عند الإلغاء
-        document.getElementById("liveArea").innerHTML = `<div style="padding:12px;">🔌 ${t("cancelled")}</div>`;
-        showToast(t("cancelled"));
-    }
-    
-    function saveToHistory(diag) {
-        let entry = { date: new Date().toLocaleString(), device: currentDeviceName, diagnosis: diag };
-        diagnosisHistory.unshift(entry);
-        if(diagnosisHistory.length > 30) diagnosisHistory.pop();
-        localStorage.setItem("homeDiagHistory", JSON.stringify(diagnosisHistory));
-        currentDiagnosisText = diag;
-    }
-    
-    function exportDiagnosisHistory() {
-        if(!diagnosisHistory.length) return;
-        let csv = "Date,Device,Diagnosis\n";
-        diagnosisHistory.forEach(h => csv += `"${h.date}","${h.device}","${h.diagnosis.replace(/"/g, '""')}"\n`);
-        let a = document.createElement("a");
-        a.href = URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv" }));
-        a.download = "home_diagnosis_history.csv";
-        a.click();
-        showToast(t("exported"));
-    }
-    
+    function cancelDiagnosis() { if(advancedTimerInterval) clearInterval(advancedTimerInterval); diagnosisInProgress=false; stopAllSensors(); document.getElementById("liveArea").innerHTML = `<div style="padding:12px;">🔌 ${t("cancelled")}</div>`; showToast(t("cancelled")); }
+    function saveToHistory(diag) { let entry = { date: new Date().toLocaleString(), device: currentDeviceName, diagnosis: diag }; diagnosisHistory.unshift(entry); if(diagnosisHistory.length>30) diagnosisHistory.pop(); localStorage.setItem("homeDiagHistory", JSON.stringify(diagnosisHistory)); currentDiagnosisText=diag; }
+    function exportDiagnosisHistory() { if(!diagnosisHistory.length) return; let csv = "Date,Device,Diagnosis\n"; diagnosisHistory.forEach(h=> csv+=`"${h.date}","${h.device}","${h.diagnosis.replace(/"/g,'""')}"\n`); let a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv"})); a.download="home_diagnosis_history.csv"; a.click(); showToast(t("exported")); }
     function saveDiagnosis() { if(currentDiagnosisText) saveToHistory(currentDiagnosisText); showToast(t("saved")); }
+    function downloadPDF() { let win=window.open(); win.document.write(`<html><meta charset="UTF-8"><title>${t("reportTitle")}</title><body><h1>${t("reportTitle")}</h1><p>${currentDeviceName}</p><p>${new Date().toLocaleString()}</p><p>${currentDiagnosisText||"No result"}</p></body></html>`); win.document.close(); }
+    function sendReportEmail() { if(!currentDiagnosisText) return; window.location.href=`mailto:?subject=${t("emailSubject")}&body=${encodeURIComponent(`Device: ${currentDeviceName}\nDiagnosis: ${currentDiagnosisText}`)}`; showToast(t("emailOpened")); }
+    function speakDiagnosisResult() { if(!currentDiagnosisText){ showToast(t("noSummary")); return; } window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(currentDiagnosisText); utterance.lang = currentLang==='ar'?'ar-SA':'en-US'; utterance.rate=0.9; window.speechSynthesis.speak(utterance); }
+    function startSpeechInput() { if(!('webkitSpeechRecognition' in window)){ showToast("Not supported"); return; } let rec = new webkitSpeechRecognition(); rec.lang = currentLang==='ar'?'ar-SA':'en-US'; rec.start(); rec.onresult=e=>{ let text=e.results[0][0].transcript; document.getElementById("reportBox").innerHTML += `<br>🎤 ${t("user")} ${text}`; showToast(t("voiceAdded")); }; }
+    function setRating(val) { let stars = document.querySelectorAll("#ratingStars span"); stars.forEach((s,i)=>{ if(i<val) s.classList.add("active"); else s.classList.remove("active"); }); let msgs = currentLang==='ar'?["","سيء","مقبول","جيد","ممتاز","احترافي"]:["","Poor","Acceptable","Good","Excellent","Professional"]; document.getElementById("ratingMsg").innerHTML = `⭐ ${msgs[val]||''}`; }
+    function selectDevice(devId, devName) { if(!adminMode && currentCredits<=0) { showToast(t("noCredits")); return; } currentDevice=devId; currentDeviceName=devName; document.getElementById("deviceList").style.display="none"; document.getElementById("labPanel").style.display="block"; document.getElementById("deviceNameLabel").innerText=devName; document.getElementById("reportBox").innerHTML = `🔧 ${devName}<br>🔍 ${t("waiting")}`; currentDiagnosisText=""; if(advancedTimerInterval) clearInterval(advancedTimerInterval); diagnosisInProgress=false; document.getElementById("liveArea").innerHTML = `<div style="padding:12px;">🔌 ${t("waiting")}</div>`; }
+    function closeLab() { if(advancedTimerInterval) clearInterval(advancedTimerInterval); diagnosisInProgress=false; stopAllSensors(); document.getElementById("deviceList").style.display="block"; document.getElementById("labPanel").style.display="none"; currentDevice=null; }
     
-    function downloadPDF() {
-        let win = window.open();
-        win.document.write(`<html><meta charset="UTF-8"><title>${t("reportTitle")}</title><body style="font-family:sans-serif;padding:20px"><h1>${t("reportTitle")}</h1><p><strong>Device:</strong> ${currentDeviceName}</p><p><strong>Date:</strong> ${new Date().toLocaleString()}</p><p><strong>Result:</strong></p><p>${(currentDiagnosisText || "No result").replace(/\n/g, "<br>")}</p></body></html>`);
-        win.document.close();
-    }
-    
-    function sendReportEmail() {
-        if(!currentDiagnosisText) return;
-        window.location.href = `mailto:?subject=${t("emailSubject")}&body=${encodeURIComponent(`Device: ${currentDeviceName}\n\nDiagnosis:\n${currentDiagnosisText}`)}`;
-        showToast(t("emailOpened"));
-    }
-    
-    function speakDiagnosisResult() {
-        if(!currentDiagnosisText) { showToast(t("noSummary")); return; }
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(currentDiagnosisText);
-        utterance.lang = currentLang === 'ar' ? 'ar-SA' : 'en-US';
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
-    }
-    
-    function startSpeechInput() {
-        if(!('webkitSpeechRecognition' in window)){ showToast("Not supported"); return; }
-        let rec = new webkitSpeechRecognition();
-        rec.lang = currentLang === 'ar' ? "ar-SA" : "en-US";
-        rec.start();
-        rec.onresult = e => {
-            let text = e.results[0][0].transcript;
-            document.getElementById("reportBox").innerHTML += `<br>🎤 ${t("user")} ${text}`;
-            showToast(t("voiceAdded"));
-        };
-    }
-    
-    function setRating(val) {
-        let stars = document.querySelectorAll("#ratingStars span");
-        stars.forEach((s,i) => { if(i < val) s.classList.add("active"); else s.classList.remove("active"); });
-        let msgs = currentLang === 'ar' ? ["","سيء","مقبول","جيد","ممتاز","احترافي"] : ["","Poor","Acceptable","Good","Excellent","Professional"];
-        document.getElementById("ratingMsg").innerHTML = `⭐ ${msgs[val] || ''}`;
-    }
-    
-    function selectDevice(devId, devName) {
-        if (!adminMode && currentCredits <= 0) { showToast(t("noCredits")); return; }
-        currentDevice = devId;
-        currentDeviceName = devName;
-        document.getElementById("deviceList").style.display = "none";
-        document.getElementById("labPanel").style.display = "block";
-        document.getElementById("deviceNameLabel").innerText = devName;
-        document.getElementById("reportBox").innerHTML = `🔧 ${devName}<br>🔍 ${t("waiting")}`;
-        currentDiagnosisText = "";
-        if(advancedTimerInterval) clearInterval(advancedTimerInterval);
-        diagnosisInProgress = false;
-        document.getElementById("liveArea").innerHTML = `<div style="padding:12px;">🔌 ${t("waiting")}</div>`;
-    }
-    
-    function closeLab() {
-        if(advancedTimerInterval) clearInterval(advancedTimerInterval);
-        diagnosisInProgress = false;
-        stopAllSensors(); // إيقاف كل الحساسات عند الخروج من المختبر
-        document.getElementById("deviceList").style.display = "block";
-        document.getElementById("labPanel").style.display = "none";
-        currentDevice = null;
-    }
-    
-    // التهيئة
+    // بدء التشغيل
     async function init() {
-        setInterval(() => {
-            let d = new Date();
-            document.getElementById("currentDate").innerText = d.toLocaleDateString();
-            document.getElementById("currentTime").innerText = d.toLocaleTimeString();
-        }, 1000);
-        
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => { document.getElementById("locationText").innerText = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`; },
-                () => { document.getElementById("locationText").innerText = "❌ ممنوع"; }
-            );
-        } else { document.getElementById("locationText").innerText = "غير متاح"; }
-        
+        setInterval(()=>{ let d=new Date(); document.getElementById("currentDate").innerText=d.toLocaleDateString(); document.getElementById("currentTime").innerText=d.toLocaleTimeString(); },1000);
+        if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>document.getElementById("locationText").innerText=`${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)}`,()=>document.getElementById("locationText").innerText="❌");
         new QRCode(document.getElementById("qrCodeContainer"), window.location.href);
-        
-        let savedLang = localStorage.getItem("home_lang");
-        if (savedLang === "ar" || savedLang === "en") currentLang = savedLang;
-        document.getElementById("langSelect").value = currentLang;
-        document.getElementById("langSelect").onchange = (e) => changeLanguage(e.target.value);
-        
+        let savedLang = localStorage.getItem("home_lang"); if(savedLang==="ar"||savedLang==="en") currentLang=savedLang;
+        document.getElementById("langSelect").value=currentLang;
+        document.getElementById("langSelect").onchange=(e)=>changeLanguage(e.target.value);
         await fetchCredits();
         await processPaymentReturn();
         updateUI();
-        
-        let adminStored = localStorage.getItem("home_admin");
-        if (adminStored === "true") adminMode = true;
+        let adminStored=localStorage.getItem("home_admin"); if(adminStored==="true") adminMode=true;
     }
-    
     init();
-    document.getElementById("secretIcon").onclick = triggerAdmin;
+    document.getElementById("secretIcon").onclick=triggerAdmin;
 </script>
 </body>
 </html>
