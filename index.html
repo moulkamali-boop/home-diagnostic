@@ -188,7 +188,23 @@ const enBase = {
     instruction_camera:"Point camera at appliance (15 sec)", instruction_mic:"Record appliance sound (15 sec)", instruction_vib:"Place phone on appliance (15 sec)", instruction_temp:"Measure temperature (15 sec)",
     normal_diag:"Normal diagnosis", smart_diag:"Smart diagnosis", credit_info:"Free diagnoses left: {{left}}/3",
     icon_normal:"Normal", icon_warning:"Warning", icon_fault:"Fault", icon_info:"Info",
-    report_header:"OFFICIAL DIAGNOSTIC REPORT", signature:"AI Home Diagnostics", subscription_status:"Subscription Plan"
+    report_header:"OFFICIAL DIAGNOSTIC REPORT", signature:"AI Home Diagnostics", subscription_status:"Subscription Plan",
+    camera_analyzing:"Analyzing live video", img_no_data:"no image data yet", img_no_visual_anomaly:"no visual anomaly detected",
+    img_too_dark:"scene too dark to analyze", img_flame_suspected:"flame-like colors detected", img_haze_suspected:"haze/smoke-like pattern detected",
+    mic_relative_note:"Note: this is a relative sound level from the phone mic, not a calibrated decibel meter.",
+    relative:"relative", vibration_rms_note:"oscillation, gravity removed",
+    temp_no_sensor_notice:"Phones have no remote thermometer for appliances. Measure with a real thermometer or IR gun and enter the value below.",
+    temp_manual_placeholder:"e.g. 42.5", temp_confirm_btn:"Record reading", temp_invalid:"Enter a valid number first",
+    temp_recorded:"Temperature recorded",
+    diag_flame:"⚠️ Flame-like colors seen on camera — possible fire risk, check immediately", 
+    diag_smoke:"⚠️ Haze/smoke-like pattern seen on camera — ventilate and inspect",
+    diag_vibration_fault:"⚠️ Abnormal vibration detected — check mounting/balance/bearings",
+    diag_temp_high:"⚠️ Recorded temperature is higher than expected for this appliance — let it cool and inspect",
+    diag_noise_abnormal:"⚠️ Unusually loud sound detected while recording — inspect for grinding/rattling parts",
+    diag_insufficient_data:"ℹ️ Not enough sensor data collected yet — use at least one sensor for a result",
+    diag_normal:"✅ No anomaly detected in the sensors used",
+    diag_disclaimer:"This is a heuristic estimate from your phone's sensors, not a certified diagnosis. For confirmation, consult a qualified technician.",
+    skip:"Skip"
 };
 
 const arTranslations = {
@@ -220,7 +236,23 @@ const arTranslations = {
     instruction_camera:"صوّر الجهاز (15 ثانية)", instruction_mic:"سجل صوت الجهاز (15 ثانية)", instruction_vib:"ضع الهاتف على الجهاز (15 ثانية)", instruction_temp:"قس الحرارة (15 ثانية)",
     normal_diag:"تشخيص عادي", smart_diag:"تشخيص ذكي", credit_info:"تشخيصات مجانية متبقية: {{left}}/3",
     icon_normal:"طبيعي", icon_warning:"تحذير", icon_fault:"عطل", icon_info:"معلومات",
-    report_header:"تقرير التشخيص الرسمي", signature:"تشخيص البيت الذكي", subscription_status:"الباقة المشتركة"
+    report_header:"تقرير التشخيص الرسمي", signature:"تشخيص البيت الذكي", subscription_status:"الباقة المشتركة",
+    camera_analyzing:"جارٍ تحليل الفيديو المباشر", img_no_data:"لا توجد بيانات صورة بعد", img_no_visual_anomaly:"لا يوجد شذوذ بصري ظاهر",
+    img_too_dark:"المشهد مظلم جداً للتحليل", img_flame_suspected:"تم رصد ألوان تشبه اللهب", img_haze_suspected:"تم رصد نمط يشبه الدخان/الضباب",
+    mic_relative_note:"ملاحظة: هذا مستوى صوت نسبي من ميكروفون الهاتف، وليس جهاز قياس ديسيبل معايَر.",
+    relative:"نسبي", vibration_rms_note:"تذبذب فعلي بعد طرح الجاذبية",
+    temp_no_sensor_notice:"لا يملك الهاتف حساس حرارة عن بعد للأجهزة. قِس الحرارة بميزان حرارة حقيقي أو جهاز أشعة تحت حمراء وأدخل القيمة أدناه.",
+    temp_manual_placeholder:"مثال: 42.5", temp_confirm_btn:"تسجيل القراءة", temp_invalid:"أدخل رقماً صحيحاً أولاً",
+    temp_recorded:"تم تسجيل درجة الحرارة",
+    diag_flame:"⚠️ رُصدت ألوان تشبه اللهب في الكاميرا — احتمال خطر حريق، تحقق فوراً",
+    diag_smoke:"⚠️ رُصد نمط يشبه الدخان/الضباب في الكاميرا — هوّي المكان وتحقق من الجهاز",
+    diag_vibration_fault:"⚠️ تم رصد اهتزاز غير طبيعي — تحقق من التثبيت/التوازن/المحامل",
+    diag_temp_high:"⚠️ درجة الحرارة المسجَّلة أعلى من المتوقع لهذا الجهاز — دعه يبرد وافحصه",
+    diag_noise_abnormal:"⚠️ رُصد صوت مرتفع بشكل غير معتاد أثناء التسجيل — تحقق من وجود أجزاء تصدر صريراً/طحناً",
+    diag_insufficient_data:"ℹ️ لم يتم جمع بيانات حساسات كافية بعد — استخدم حساساً واحداً على الأقل للحصول على نتيجة",
+    diag_normal:"✅ لم يُرصد أي شذوذ في الحساسات المستخدَمة",
+    diag_disclaimer:"هذه نتيجة تقديرية اعتماداً على حساسات هاتفك، وليست تشخيصاً معتمداً. للتأكد، استشر فنياً مختصاً.",
+    skip:"تخطي"
 };
 
 const frTranslations = {
@@ -1454,14 +1486,16 @@ const langNative = { ar:"🇸🇦 العربية", en:"🇬🇧 English", fr:"�
 
 // ==================== حالة التطبيق ====================
 let state = {
-    lang: 'ar', deviceID: Math.random().toString(36).slice(2,10).toUpperCase(),
+    lang: 'ar', deviceID: (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)).replace(/-/g,'').slice(0,8).toUpperCase(),
     currentDevice: null, currentStreams: { camera: null, microphone: null },
     sensorStatus: { camera: false, microphone: false, vibration: false, temperature: false },
-    currentIntervals: { vibration: null, temperature: null }, vibrationHandler: null,
+    currentIntervals: { vibration: null, temperature: null, image: null }, vibrationHandler: null,
     reportLines: [], finalDiagnosis: '', isAdmin: localStorage.getItem('home_isAdmin') === 'true',
     diagnosisHistory: JSON.parse(localStorage.getItem('home_diagnosis_history') || '[]'),
-    currentMode: null, soundAnalysis: { level: 0 }, vibrationAvg: 0, temperature: 45,
-    imageDescription: '', audioDescription: '', freeCreditsUsed: parseInt(localStorage.getItem('home_freeCreditsUsed') || '0'),
+    currentMode: null, soundAnalysis: { level: 0, rms: 0, dbApprox: null, samples: 0 },
+    vibrationLevel: 0, vibrationSamples: 0, temperature: null, temperatureSource: 'none',
+    imageAnalysis: { brightness: null, grayness: null, contrast: null, flamePixelRatio: null, samples: 0 },
+    imageDescription: 'no_data', audioDescription: 'no_data', freeCreditsUsed: parseInt(localStorage.getItem('home_freeCreditsUsed') || '0'),
     paidCredits: parseInt(localStorage.getItem('home_paid_credits') || '0'), sensorsEnabled: false,
     smartActive: false, recognition: null
 };
@@ -1607,21 +1641,125 @@ function startSpeechToText(){
     state.recognition = recognition;
 }
 function stopSensor(sensorType){ 
-    if(sensorType==='camera' && state.currentStreams.camera){ state.currentStreams.camera.getTracks().forEach(t=>t.stop()); state.currentStreams.camera=null; state.sensorStatus.camera=false; document.getElementById('sensor-cam-btn')?.classList.remove('active'); document.getElementById('monitor-area').innerHTML='<div style="padding:20px;color:#94a3b8">🔌 Camera stopped</div>'; }
+    if(sensorType==='camera' && state.currentStreams.camera){ state.currentStreams.camera.getTracks().forEach(t=>t.stop()); state.currentStreams.camera=null; state.sensorStatus.camera=false; if(state.currentIntervals.image) clearInterval(state.currentIntervals.image); document.getElementById('sensor-cam-btn')?.classList.remove('active'); document.getElementById('monitor-area').innerHTML='<div style="padding:20px;color:#94a3b8">🔌 Camera stopped</div>'; }
     if(sensorType==='microphone' && state.currentStreams.microphone){ state.currentStreams.microphone.getTracks().forEach(t=>t.stop()); state.currentStreams.microphone=null; state.sensorStatus.microphone=false; document.getElementById('sensor-mic-btn')?.classList.remove('active'); }
     if(sensorType==='vibration'){ if(state.vibrationHandler) window.removeEventListener('devicemotion',state.vibrationHandler); if(state.currentIntervals.vibration) clearInterval(state.currentIntervals.vibration); state.sensorStatus.vibration=false; document.getElementById('sensor-vib-btn')?.classList.remove('active'); }
     if(sensorType==='temperature'){ if(state.currentIntervals.temperature) clearInterval(state.currentIntervals.temperature); state.sensorStatus.temperature=false; document.getElementById('sensor-temp-btn')?.classList.remove('active'); }
 }
-async function startCamera(){ if(state.sensorStatus.camera) return; document.getElementById('monitor-area').innerHTML = `<video id="cameraVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video><div class="instruction-box">📷 ${t('instruction_camera')}</div>`; try{ const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); const video = document.getElementById('cameraVideo'); video.srcObject = stream; await video.play(); state.currentStreams.camera = stream; state.sensorStatus.camera = true; document.getElementById('sensor-cam-btn')?.classList.add('active'); setTimeout(() => { state.imageDescription = "normal"; }, 4000); } catch(e){ document.getElementById('monitor-area').innerHTML = `<div style="padding:20px;color:#94a3b8">🔌 ${t('camera_error')}</div>`; showToast(t('camera_error')); } }
-async function startMicrophone(){ if(state.sensorStatus.microphone) return; document.getElementById('monitor-area').innerHTML = `<canvas id="micCanvas" width="100%" height="200" style="width:100%;height:100%;background:#000;"></canvas><div class="instruction-box">🎙️ ${t('instruction_mic')}</div>`; try{ const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); state.currentStreams.microphone = stream; const audioCtx = new AudioContext(); await audioCtx.resume(); const source = audioCtx.createMediaStreamSource(stream); const analyser = audioCtx.createAnalyser(); analyser.fftSize = 256; source.connect(analyser); const dataArray = new Uint8Array(analyser.frequencyBinCount); const canvas = document.getElementById('micCanvas'); canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; const ctx = canvas.getContext('2d'); function drawWave(){ if(!state.sensorStatus.microphone) return; analyser.getByteFrequencyData(dataArray); let avg = 0; for(let i=0;i<dataArray.length;i++) avg += dataArray[i]; avg /= dataArray.length; state.soundAnalysis.level = avg / 255; if(avg>150) state.audioDescription = "loud noise"; else if(avg>80) state.audioDescription = "moderate"; else state.audioDescription = "quiet"; ctx.clearRect(0,0,canvas.width,canvas.height); ctx.beginPath(); ctx.strokeStyle='#f5b81b'; ctx.lineWidth=2; for(let i=0;i<canvas.width;i+=5){ let idx = Math.floor(i/canvas.width*dataArray.length); let val = dataArray[idx]/255; let y = canvas.height/2 + (val*canvas.height/2)*(Math.sin(i*0.05)+0.5); if(i===0) ctx.moveTo(i,y); else ctx.lineTo(i,y); } ctx.stroke(); requestAnimationFrame(drawWave); } drawWave(); state.sensorStatus.microphone = true; document.getElementById('sensor-mic-btn')?.classList.add('active'); } catch(e){ document.getElementById('monitor-area').innerHTML = `<div style="padding:20px;color:#94a3b8">🔌 ${t('mic_error')}</div>`; showToast(t('mic_error')); } }
-function startVibration(){ if(state.sensorStatus.vibration) return; if(!window.DeviceMotionEvent){ showToast(t('vibration_not_supported')); return; } document.getElementById('monitor-area').innerHTML = `<canvas id="vibCanvas" width="100%" height="200" style="width:100%;height:100%;background:#000;"></canvas><div class="instruction-box">📳 ${t('instruction_vib')}</div>`; const canvas = document.getElementById('vibCanvas'); canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; const ctx = canvas.getContext('2d'); let vibValues = []; const handler = (e) => { if(!state.sensorStatus.vibration) return; const acc = e.accelerationIncludingGravity; if(acc){ const intensity = Math.sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z); vibValues.push(intensity); if(vibValues.length>100) vibValues.shift(); let avg = vibValues.reduce((a,b)=>a+b,0)/vibValues.length; state.vibrationAvg = avg; ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#f59e0b'; let pct = Math.min(100, (avg/20)*100); ctx.fillRect(0, canvas.height-(pct*canvas.height/100), canvas.width, pct*canvas.height/100); ctx.fillStyle='#fff'; ctx.fillText(`${t('vibration_label')} ${avg.toFixed(1)} m/s²`,10,20); } }; window.addEventListener('devicemotion', handler); state.vibrationHandler = handler; state.sensorStatus.vibration = true; document.getElementById('sensor-vib-btn')?.classList.add('active'); }
-function startTemperature(){ if(state.sensorStatus.temperature) return; document.getElementById('monitor-area').innerHTML = `<div style="padding:20px;text-align:center;"><span style="font-size:2rem;font-weight:700;" id="tempValue">--°C</span><div style="margin-top:8px;">${t('temp_estimate')}</div></div><div class="instruction-box">🌡️ ${t('instruction_temp')}</div>`; let temp = 35 + Math.random()*15; const updateTemp = () => { if(!state.sensorStatus.temperature) return; temp += (Math.random()-0.5)*0.4; temp = Math.min(75, Math.max(25, temp)); state.temperature = temp; const el = document.getElementById('tempValue'); if(el) el.textContent = `${temp.toFixed(1)}°C`; }; updateTemp(); state.currentIntervals.temperature = setInterval(updateTemp, 800); state.sensorStatus.temperature = true; document.getElementById('sensor-temp-btn')?.classList.add('active'); }
+async function startCamera(){ if(state.sensorStatus.camera) return; document.getElementById('monitor-area').innerHTML = `<video id="cameraVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;"></video><canvas id="camAnalysisCanvas" width="48" height="36" style="display:none"></canvas><div class="instruction-box">📷 ${t('instruction_camera')}</div><div id="camReadout" style="position:absolute;bottom:8px;left:8px;right:8px;font-size:0.6rem;color:#f5b81b;background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:8px;">${t('camera_analyzing')}</div>`;
+    try{
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        const video = document.getElementById('cameraVideo');
+        video.srcObject = stream; await video.play();
+        state.currentStreams.camera = stream; state.sensorStatus.camera = true;
+        document.getElementById('sensor-cam-btn')?.classList.add('active');
+        const canvas = document.getElementById('camAnalysisCanvas'); const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const analyzeFrame = () => {
+            if(!state.sensorStatus.camera) return;
+            try{
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const frame = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                let sumLum=0, sumLum2=0, sumSat=0, flamePixels=0, n=0;
+                for(let i=0;i<frame.length;i+=4){
+                    const r=frame[i], g=frame[i+1], b=frame[i+2];
+                    const lum = 0.299*r + 0.587*g + 0.114*b;
+                    const maxc=Math.max(r,g,b), minc=Math.min(r,g,b);
+                    const sat = maxc===0 ? 0 : (maxc-minc)/maxc;
+                    sumLum += lum; sumLum2 += lum*lum; sumSat += sat; n++;
+                    if(r>140 && (r-g)>35 && (g-b)>-10 && (r-b)>60) flamePixels++;
+                }
+                const meanLum = sumLum/n;
+                const variance = Math.max(0, sumLum2/n - meanLum*meanLum);
+                const contrast = Math.sqrt(variance);
+                const grayness = 1 - (sumSat/n);
+                const flameRatio = flamePixels/n;
+                state.imageAnalysis = { brightness: meanLum, grayness, contrast, flamePixelRatio: flameRatio, samples: (state.imageAnalysis.samples||0)+1 };
+                if(meanLum < 12) state.imageDescription = 'too_dark';
+                else if(flameRatio > 0.06) state.imageDescription = 'flame_suspected';
+                else if(grayness > 0.75 && contrast < 18 && meanLum > 60 && meanLum < 210) state.imageDescription = 'haze_suspected';
+                else state.imageDescription = 'no_visual_anomaly';
+                const readout = document.getElementById('camReadout');
+                if(readout) readout.textContent = `${t('camera_analyzing')} — ${t('img_'+state.imageDescription)}`;
+            } catch(err){ /* frame not ready yet, skip this tick */ }
+        };
+        state.currentIntervals.image = setInterval(analyzeFrame, 700);
+    } catch(e){ document.getElementById('monitor-area').innerHTML = `<div style="padding:20px;color:#94a3b8">🔌 ${t('camera_error')}</div>`; showToast(t('camera_error')); } }
+async function startMicrophone(){ if(state.sensorStatus.microphone) return; document.getElementById('monitor-area').innerHTML = `<canvas id="micCanvas" width="100%" height="200" style="width:100%;height:100%;background:#000;"></canvas><div class="instruction-box">🎙️ ${t('instruction_mic')}</div><div style="font-size:0.6rem;color:#94a3b8;padding:0 8px;">${t('mic_relative_note')}</div>`; try{ const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); state.currentStreams.microphone = stream; const audioCtx = new AudioContext(); await audioCtx.resume(); const source = audioCtx.createMediaStreamSource(stream); const analyser = audioCtx.createAnalyser(); analyser.fftSize = 1024; source.connect(analyser); const freqArray = new Uint8Array(analyser.frequencyBinCount); const timeArray = new Uint8Array(analyser.fftSize); const canvas = document.getElementById('micCanvas'); canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; const ctx = canvas.getContext('2d'); function drawWave(){ if(!state.sensorStatus.microphone) return; analyser.getByteFrequencyData(freqArray); analyser.getByteTimeDomainData(timeArray); let sumSquares = 0; for(let i=0;i<timeArray.length;i++){ const v = (timeArray[i]-128)/128; sumSquares += v*v; } const rms = Math.sqrt(sumSquares/timeArray.length); const dbApprox = rms > 0.0001 ? 20*Math.log10(rms) : -60; state.soundAnalysis.level = Math.min(1, rms*3); state.soundAnalysis.rms = rms; state.soundAnalysis.dbApprox = dbApprox; state.soundAnalysis.samples = (state.soundAnalysis.samples||0)+1; if(dbApprox > -12) state.audioDescription = "loud"; else if(dbApprox > -30) state.audioDescription = "moderate"; else state.audioDescription = "quiet"; ctx.clearRect(0,0,canvas.width,canvas.height); ctx.beginPath(); ctx.strokeStyle='#f5b81b'; ctx.lineWidth=2; const sliceWidth = canvas.width/timeArray.length; let x=0; for(let i=0;i<timeArray.length;i++){ const v = timeArray[i]/128; const y = v*canvas.height/2; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); x+=sliceWidth; } ctx.stroke(); ctx.fillStyle='#fff'; ctx.font='11px sans-serif'; ctx.fillText(`${dbApprox.toFixed(1)} dBFS (${t('relative')})`, 10, 16); requestAnimationFrame(drawWave); } drawWave(); state.sensorStatus.microphone = true; document.getElementById('sensor-mic-btn')?.classList.add('active'); } catch(e){ document.getElementById('monitor-area').innerHTML = `<div style="padding:20px;color:#94a3b8">🔌 ${t('mic_error')}</div>`; showToast(t('mic_error')); } }
+function startVibration(){ if(state.sensorStatus.vibration) return; if(!window.DeviceMotionEvent){ showToast(t('vibration_not_supported')); return; } document.getElementById('monitor-area').innerHTML = `<canvas id="vibCanvas" width="100%" height="200" style="width:100%;height:100%;background:#000;"></canvas><div class="instruction-box">📳 ${t('instruction_vib')}</div>`; const canvas = document.getElementById('vibCanvas'); canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; const ctx = canvas.getContext('2d'); let vibValues = []; const handler = (e) => { if(!state.sensorStatus.vibration) return; const acc = e.accelerationIncludingGravity || e.acceleration; if(acc && (acc.x!==null)){ const magnitude = Math.sqrt((acc.x||0)*(acc.x||0) + (acc.y||0)*(acc.y||0) + (acc.z||0)*(acc.z||0)); vibValues.push(magnitude); if(vibValues.length>60) vibValues.shift(); if(vibValues.length<5) return; const meanMag = vibValues.reduce((a,b)=>a+b,0)/vibValues.length; const variance = vibValues.reduce((s,v)=>s+(v-meanMag)*(v-meanMag),0)/vibValues.length; const oscillation = Math.sqrt(variance); state.vibrationLevel = oscillation; state.vibrationSamples = vibValues.length; ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle='#f59e0b'; let pct = Math.min(100, (oscillation/6)*100); ctx.fillRect(0, canvas.height-(pct*canvas.height/100), canvas.width, pct*canvas.height/100); ctx.fillStyle='#fff'; ctx.fillText(`${t('vibration_label')} ${oscillation.toFixed(2)} m/s² (${t('vibration_rms_note')})`,10,20); } }; window.addEventListener('devicemotion', handler); state.vibrationHandler = handler; state.sensorStatus.vibration = true; document.getElementById('sensor-vib-btn')?.classList.add('active'); }
+function startTemperature(){ if(state.sensorStatus.temperature) return; state.sensorStatus.temperature = true; document.getElementById('sensor-temp-btn')?.classList.add('active');
+    document.getElementById('monitor-area').innerHTML = `<div style="padding:16px;text-align:center;width:100%;">
+        <div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">🌡️ ${t('temp_no_sensor_notice')}</div>
+        <input id="tempManualInput" type="number" step="0.1" placeholder="${t('temp_manual_placeholder')}" style="width:60%;padding:10px;border-radius:20px;border:1px solid #3b82f6;background:#1e293b;color:#fff;text-align:center;font-size:1.1rem;">
+        <span style="margin-inline-start:6px;">°C</span>
+        <div style="margin-top:10px;"><button onclick="confirmManualTemperature()" style="background:#10b981;border:none;padding:8px 18px;border-radius:30px;color:#fff;font-weight:600;cursor:pointer;">${t('temp_confirm_btn')}</button></div>
+        <div id="tempConfirmedReadout" style="margin-top:10px;font-size:0.9rem;color:#f5b81b;"></div>
+    </div><div class="instruction-box">🌡️ ${t('instruction_temp')}</div>`;
+}
+function confirmManualTemperature(){
+    const input = document.getElementById('tempManualInput');
+    const val = parseFloat(input?.value);
+    if(isNaN(val)){ showToast(t('temp_invalid')); return; }
+    state.temperature = val; state.temperatureSource = 'manual';
+    const readout = document.getElementById('tempConfirmedReadout');
+    if(readout) readout.textContent = `✅ ${t('temp_recorded')}: ${val.toFixed(1)}°C`;
+    showToast(t('temp_recorded'));
+    if(window._smartStepAdvance) window._smartStepAdvance();
+}
 function toggleSensor(sensor) { if(state.currentMode !== 'normal') { showToast(t('activate')); return; } if(!state.sensorsEnabled) { showToast(t('quick_diag')); return; } if(state.sensorStatus[sensor]) { stopSensor(sensor); } else { if(sensor === 'camera') startCamera(); else if(sensor === 'microphone') startMicrophone(); else if(sensor === 'vibration') startVibration(); else if(sensor === 'temperature') startTemperature(); } }
-function finishManualDiagnosis() { if(!totalCreditsLeft() && !state.isAdmin){ showToast(t('no_credits')); return; } let diagnosis = t('normal'); if(state.soundAnalysis.level > 0.6) diagnosis = t("fault_vibration")+" 🔊"; else if(state.vibrationAvg > 8) diagnosis = t('fault_vibration') + " ⚠️"; else if(state.temperature > 65) diagnosis = t("fault_vibration")+" 🔥"; else if(state.imageDescription.includes("smoke")) diagnosis = t("fault_vibration")+" 🔥"; else diagnosis = "✅ "+t("normal"); state.finalDiagnosis = diagnosis; state.reportLines.push(`🧠 ${diagnosis}`); document.getElementById('live-report').innerHTML = state.reportLines.join('\n'); document.getElementById('monitor-area').innerHTML = `<div style="padding:20px;">${diagnosis}</div>`; saveToHistory(diagnosis); if(useDiagnosisCredit()) updateCreditDisplay(); showResultIcons(diagnosis); state.currentMode = null; state.sensorsEnabled = false; document.getElementById('quickModeBtn').classList.remove('active'); }
+function computeDiagnosis(){
+    let anySensorUsed = false, severity = 'normal', messages = [];
+    if(state.vibrationSamples >= 5){
+        anySensorUsed = true;
+        if(state.vibrationLevel > 2.5){ messages.push(t('diag_vibration_fault')); severity = 'fault'; }
+    }
+    if(state.soundAnalysis.samples >= 5){
+        anySensorUsed = true;
+        if(state.soundAnalysis.dbApprox !== null && state.soundAnalysis.dbApprox > -10){ messages.push(t('diag_noise_abnormal')); if(severity !== 'fault') severity = 'warning'; }
+    }
+    if(state.imageAnalysis.samples >= 1){
+        anySensorUsed = true;
+        if(state.imageDescription === 'flame_suspected'){ messages.push(t('diag_flame')); severity = 'fault'; }
+        else if(state.imageDescription === 'haze_suspected'){ messages.push(t('diag_smoke')); if(severity !== 'fault') severity = 'warning'; }
+    }
+    if(state.temperatureSource === 'manual' && state.temperature !== null){
+        anySensorUsed = true;
+        const hotByDesign = ['stove','heater','gas'].includes(state.currentDevice);
+        const threshold = hotByDesign ? 120 : 55;
+        if(state.temperature > threshold){ messages.push(t('diag_temp_high')); if(severity !== 'fault') severity = 'warning'; }
+    }
+    if(!anySensorUsed) return { text: t('diag_insufficient_data'), severity: 'info' };
+    if(messages.length === 0) return { text: t('diag_normal'), severity: 'normal' };
+    return { text: messages.join(' — '), severity };
+}
+function renderDiagnosisResult(){
+    const result = computeDiagnosis();
+    const diagnosis = `${result.text}\n\n📋 ${t('diag_disclaimer')}`;
+    state.finalDiagnosis = diagnosis;
+    state.reportLines.push(`🧠 ${result.text}`);
+    document.getElementById('live-report').innerHTML = state.reportLines.join('\n');
+    document.getElementById('monitor-area').innerHTML = `<div style="padding:20px;white-space:pre-wrap;">${diagnosis}</div>`;
+    saveToHistory(result.text);
+    if(useDiagnosisCredit()) updateCreditDisplay();
+    showResultIcons(result.text);
+    return result;
+}
+function finishManualDiagnosis() { if(!totalCreditsLeft() && !state.isAdmin){ showToast(t('no_credits')); return; } renderDiagnosisResult(); state.currentMode = null; state.sensorsEnabled = false; document.getElementById('quickModeBtn').classList.remove('active'); }
 function showResultIcons(diagnosis) { let iconsDiv = document.getElementById('resultIcons'); iconsDiv.innerHTML = `<div class="result-icon icon-green">✅ ${t('icon_normal')}</div><div class="result-icon icon-yellow">⚠️ ${t('icon_warning')}</div>`; iconsDiv.classList.remove('hidden'); }
 function toggleNormalMode() { if(state.currentMode === 'normal' && state.sensorsEnabled) { finishManualDiagnosis(); } else { if(state.smartActive){ showToast(t('stop_sensors_first')); return; } state.currentMode = 'normal'; state.sensorsEnabled = true; document.getElementById('quickModeBtn').classList.add('active'); document.getElementById('advancedModeBtn').classList.remove('active'); showToast(t('quick_diag')+': '+t('activate')); } }
-async function activateSmartMode() { if(state.smartActive) return; if(!totalCreditsLeft() && !state.isAdmin){ showToast(t('no_credits')); return; } state.currentMode = 'smart'; state.smartActive = true; document.getElementById('advancedModeBtn').classList.add('active'); document.getElementById('quickModeBtn').classList.remove('active'); const steps = [ { name:'camera', msg:t('step_camera'), action:startCamera, duration:15000 }, { name:'microphone', msg:t('step_mic'), action:startMicrophone, duration:15000 }, { name:'vibration', msg:t('step_vib'), action:startVibration, duration:15000 }, { name:'temperature', msg:t('step_temp'), action:startTemperature, duration:15000 } ]; let stepIndex=0; const runStep = async () => { if(!state.smartActive) return; if(stepIndex>=steps.length){ let diagnosis = t('normal'); if(state.soundAnalysis.level>0.6) diagnosis=t("fault_vibration")+" 🔊"; else if(state.vibrationAvg>8) diagnosis=t('fault_vibration')+" ⚠️"; else if(state.temperature>65) diagnosis=t("fault_vibration")+" 🔥"; else diagnosis="✅ "+t("normal"); state.finalDiagnosis=diagnosis; state.reportLines.push(`🧠 ${diagnosis}`); document.getElementById('live-report').innerHTML=state.reportLines.join('\n'); document.getElementById('monitor-area').innerHTML=`<div style="padding:20px;">${diagnosis}</div>`; saveToHistory(diagnosis); if(useDiagnosisCredit()) updateCreditDisplay(); showResultIcons(diagnosis); state.smartActive=false; document.getElementById('advancedModeBtn').classList.remove('active'); document.getElementById('stepIndicator').classList.add('hidden'); return; } const step=steps[stepIndex]; document.getElementById('stepIndicator').innerHTML=step.msg; document.getElementById('stepIndicator').classList.remove('hidden'); const instrDiv=document.createElement('div'); instrDiv.className='instruction-box'; instrDiv.innerText=step.msg; document.getElementById('monitor-area').appendChild(instrDiv); await step.action(); if(!state.smartActive) return; setTimeout(()=>{ instrDiv.remove(); stopSensor(step.name); stepIndex++; runStep(); }, step.duration); }; runStep(); }
-function cancelDiagnosis() { if(state.smartActive) state.smartActive=false; if(state.recognition) { state.recognition.stop(); state.recognition=null; } for(let s of ['camera','microphone','vibration','temperature']) stopSensor(s); state.currentMode=null; state.sensorsEnabled=false; document.getElementById('quickModeBtn').classList.remove('active'); document.getElementById('advancedModeBtn').classList.remove('active'); document.getElementById('stepIndicator').classList.add('hidden'); document.getElementById('live-report').innerHTML=t('waiting'); document.getElementById('monitor-area').innerHTML='<div style="padding:20px;color:#94a3b8">🔌 '+t('cancel')+'</div>'; showToast(t('cancel')); }
+async function activateSmartMode() { if(state.smartActive) return; if(!totalCreditsLeft() && !state.isAdmin){ showToast(t('no_credits')); return; } state.currentMode = 'smart'; state.smartActive = true; document.getElementById('advancedModeBtn').classList.add('active'); document.getElementById('quickModeBtn').classList.remove('active'); const steps = [ { name:'camera', msg:t('step_camera'), action:startCamera, duration:15000 }, { name:'microphone', msg:t('step_mic'), action:startMicrophone, duration:15000 }, { name:'vibration', msg:t('step_vib'), action:startVibration, duration:15000 }, { name:'temperature', msg:t('step_temp'), action:startTemperature, manual:true } ]; let stepIndex=0; const runStep = async () => { if(!state.smartActive) return; if(stepIndex>=steps.length){ renderDiagnosisResult(); state.smartActive=false; document.getElementById('advancedModeBtn').classList.remove('active'); document.getElementById('stepIndicator').classList.add('hidden'); return; } const step=steps[stepIndex]; document.getElementById('stepIndicator').innerHTML=step.msg; document.getElementById('stepIndicator').classList.remove('hidden'); const instrDiv=document.createElement('div'); instrDiv.className='instruction-box'; instrDiv.innerText=step.msg; document.getElementById('monitor-area').appendChild(instrDiv); await step.action(); if(!state.smartActive) return;
+        if(step.manual){
+            const skipBtn = document.createElement('button');
+            skipBtn.textContent = t('skip'); skipBtn.style.cssText='margin-top:8px;background:#334155;border:1px solid #64748b;padding:6px 16px;border-radius:20px;color:#fff;cursor:pointer;';
+            skipBtn.onclick = () => { window._smartStepAdvance && window._smartStepAdvance(); };
+            document.getElementById('monitor-area').appendChild(skipBtn);
+            await new Promise(resolve => { window._smartStepAdvance = resolve; });
+            window._smartStepAdvance = null; skipBtn.remove();
+            instrDiv.remove(); stopSensor(step.name); stepIndex++; runStep();
+        } else {
+            setTimeout(()=>{ instrDiv.remove(); stopSensor(step.name); stepIndex++; runStep(); }, step.duration);
+        }
+    }; runStep(); }
+function cancelDiagnosis() { if(state.smartActive) state.smartActive=false; if(window._smartStepAdvance){ window._smartStepAdvance(); window._smartStepAdvance=null; } if(state.recognition) { state.recognition.stop(); state.recognition=null; } for(let s of ['camera','microphone','vibration','temperature']) stopSensor(s); state.currentMode=null; state.sensorsEnabled=false; document.getElementById('quickModeBtn').classList.remove('active'); document.getElementById('advancedModeBtn').classList.remove('active'); document.getElementById('stepIndicator').classList.add('hidden'); document.getElementById('live-report').innerHTML=t('waiting'); document.getElementById('monitor-area').innerHTML='<div style="padding:20px;color:#94a3b8">🔌 '+t('cancel')+'</div>'; showToast(t('cancel')); }
 function setRating(n){ let stars=document.querySelectorAll('#rating-stars span'); stars.forEach((s,i)=>s.classList.toggle('active', i<n)); let levels=['',t('poor'),t('acceptable'),t('good'),t('excellent'),t('professional')]; document.getElementById('rating-msg').innerHTML=`⭐ ${levels[n]||''}`; }
 function speakResult() {
     let text = state.finalDiagnosis || t('listen');
@@ -1720,7 +1858,11 @@ function initClock(){ let tick=()=>{ let now=new Date(); let d=now.getDate().toS
 function initGeo(){ navigator.geolocation.getCurrentPosition((p)=>{ document.getElementById('location').textContent=`${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)}`; },()=>{ document.getElementById('location').textContent='❌'; }); }
 function initQR(){ new QRCode(document.getElementById('qr-container'),{text:window.location.href,width:50,height:50}); }
 function buildDevices(){ const devices=[{id:"washer",name:"washer",icon:"fas fa-tshirt"},{id:"fridge",name:"fridge",icon:"fas fa-thermometer-half"},{id:"ac",name:"ac",icon:"fas fa-wind"},{id:"heater",name:"heater",icon:"fas fa-bolt"},{id:"stove",name:"stove",icon:"fas fa-fire"},{id:"gas",name:"gas",icon:"fas fa-gas-pump"}]; let grid=document.getElementById('home-grid'); grid.innerHTML=devices.map(d=>`<div class="device-btn" onclick="openLab('${d.name}')"><i class="${d.icon} device-icon"></i><div class="device-name" id="dev-${d.id}">${t(d.name)}</div></div>`).join(''); }
-function openLab(deviceKey){ if(!totalCreditsLeft() && !state.isAdmin){ showToast(t('no_credits')); return; } state.currentDevice=deviceKey; state.reportLines=[]; state.finalDiagnosis=''; document.getElementById('home-grid').style.display='none'; document.getElementById('lab-ui').style.display='block'; document.getElementById('lab-device-name').innerHTML=t(deviceKey); document.getElementById('live-report').innerHTML=t('waiting'); document.getElementById('monitor-area').innerHTML=`<div style="padding:20px;color:#94a3b8">🔌 ${t('activate')}</div>`; for(let s in state.sensorStatus) if(state.sensorStatus[s]) stopSensor(s); state.currentMode=null; state.sensorsEnabled=false; document.getElementById('quickModeBtn').classList.remove('active'); document.getElementById('advancedModeBtn').classList.remove('active'); updateCreditDisplay(); }
+function openLab(deviceKey){ if(!totalCreditsLeft() && !state.isAdmin){ showToast(t('no_credits')); return; } state.currentDevice=deviceKey; state.reportLines=[]; state.finalDiagnosis='';
+    state.soundAnalysis = { level: 0, rms: 0, dbApprox: null, samples: 0 };
+    state.vibrationLevel = 0; state.vibrationSamples = 0; state.temperature = null; state.temperatureSource = 'none';
+    state.imageAnalysis = { brightness: null, grayness: null, contrast: null, flamePixelRatio: null, samples: 0 };
+    state.imageDescription = 'no_data'; state.audioDescription = 'no_data'; document.getElementById('home-grid').style.display='none'; document.getElementById('lab-ui').style.display='block'; document.getElementById('lab-device-name').innerHTML=t(deviceKey); document.getElementById('live-report').innerHTML=t('waiting'); document.getElementById('monitor-area').innerHTML=`<div style="padding:20px;color:#94a3b8">🔌 ${t('activate')}</div>`; for(let s in state.sensorStatus) if(state.sensorStatus[s]) stopSensor(s); state.currentMode=null; state.sensorsEnabled=false; document.getElementById('quickModeBtn').classList.remove('active'); document.getElementById('advancedModeBtn').classList.remove('active'); updateCreditDisplay(); }
 function closeLab(){ cancelDiagnosis(); document.getElementById('home-grid').style.display='grid'; document.getElementById('lab-ui').style.display='none'; state.currentDevice=null; }
 function buySingle(){ window.open("https://ai-moto-maintenance.lemonsqueezy.com/checkout/buy/16f76940-fbac-46fa-97a2-a14c43ab986d?checkout[success_url]=" + encodeURIComponent(window.location.href+"?payment=success&pack=single"), "_blank"); }
 function buyPack5(){ window.open("https://ai-moto-maintenance.lemonsqueezy.com/checkout/buy/54d3a421-481d-4cf9-a000-cd8e03c0f0fd?checkout[success_url]=" + encodeURIComponent(window.location.href+"?payment=success&pack=5"), "_blank"); }
