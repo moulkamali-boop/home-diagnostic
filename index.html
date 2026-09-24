@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
 <meta name="theme-color" content="#0a0f1a">
-<title>🏠 Physics Lab Home — AI</title>
+<title>🏠 Physics Lab Home — AI Learning</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E🏠%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
@@ -282,6 +282,15 @@ body{background:#0a0f1a;color:#e2e8f0;font-family:'Segoe UI',system-ui,sans-seri
       <div class="verdict-sentence" id="verdictSentence"></div>
       <div class="verdict-solution" id="verdictSolution"></div>
       <div class="ai-source" id="aiSource">🔬 —</div>
+      <!-- Feedback Loop -->
+      <div id="feedbackRow" style="display:none;gap:8px;margin:10px 0">
+        <button onclick="submitFeedback(true)" style="flex:1;padding:10px;background:linear-gradient(135deg,#10b981,#059669);border:none;border-radius:30px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:.8rem">
+          ✅ <span id="fbCorrectLabel">التشخيص صحيح</span>
+        </button>
+        <button onclick="submitFeedback(false)" style="flex:1;padding:10px;background:linear-gradient(135deg,#ef4444,#dc2626);border:none;border-radius:30px;color:#fff;font-weight:700;cursor:pointer;font-family:inherit;font-size:.8rem">
+          ❌ <span id="fbWrongLabel">خطأ، ساعدني أصحح</span>
+        </button>
+      </div>
       <div class="gas-note" id="gasNote" style="display:none"></div>
       <div id="userNotesContainer" style="margin:8px 0;padding:8px;background:#0f172a;border-radius:12px;border:1px solid #334155;text-align:right;display:none">
         <div style="font-size:.68rem;color:#94a3b8;font-weight:600">📝 <span id="userNotesLabel">ملاحظات المستخدم:</span></div>
@@ -398,6 +407,9 @@ body{background:#0a0f1a;color:#e2e8f0;font-family:'Segoe UI',system-ui,sans-seri
     <button class="btn-blue" onclick="toggleAI()" style="margin-top:6px">🧠 تشغيل/إيقاف AI العميق</button>
     <button class="btn-purple" onclick="bootstrapTrainAI()" style="margin-top:6px">🏋️ تدريب أولي (30 ثانية)</button>
     <button class="btn-green" onclick="checkAIStatus()" style="margin-top:6px">📊 حالة AI</button>
+    <div style="font-size:.7rem;color:#94a3b8;margin-top:8px;padding:6px;background:#0f172a;border-radius:10px">
+      🎓 <span id="fbCountDisplay">0</span> <span id="fbCountLabel">مرات التعلّم</span>
+    </div>
     <button class="btn-secondary" onclick="closeAdminModal()" id="secretCloseLabel" style="margin-top:6px">✖ إلغاء</button>
   </div>
 </div>
@@ -431,10 +443,9 @@ body{background:#0a0f1a;color:#e2e8f0;font-family:'Segoe UI',system-ui,sans-seri
 
 <script>
 /* ═══════════════════════════════════════════════════════════
-   🏠 Physics Lab Home — Smart AI Edition
+   🏠 Physics Lab Home — Smart AI + Learning Edition
    ═══════════════════════════════════════════════════════════ */
 
-/* ─── 1. قائمة اللغات الـ 23 ─── */
 var LANG_LIST = [
     {code:'ar',flag:'🇸🇦',name:'العربية',dir:'rtl'},
     {code:'en',flag:'🇬🇧',name:'English',dir:'ltr'},
@@ -461,12 +472,10 @@ var LANG_LIST = [
     {code:'sw',flag:'🇰🇪',name:'Kiswahili',dir:'ltr'}
 ];
 
-/* ─── 2. مفاتيح الترجمة ─── */
-var T_KEYS = ['subtitle','free_label','activate','activation_code','developer','password','confirm','cancel','copied','shared','thanks','back','listen','copy','share','print','new_exam','reset','history','start_btn','measure','retry','done_btn','skip','sensor_camera','sensor_microphone','sensor_accelerometer','instr_camera','instr_microphone','instr_accelerometer','waiting','status_measuring','status_done','status_skipped','status_error','status_waiting','confidence_label','no_data','device_fridge','device_washer','device_ac','device_electric_heater','device_gas_heater','device_stove','consent_title','consent_text','consent_btn','refuse_btn','calibration_title','calibration_text','calibration_yes','calibration_no','legal','no_credits','invalid','verifying','network_error','wrong_password','location_denied','location_unavailable','location_loading','notes_title','notes_sub','notes_char','notes_mic','notes_clear','user_notes_label','write_btn','summary_btn','final_confirm_yes','final_confirm_no','sensor_count_3','sensor_count_2','sensor_count_1','sensor_count_0','confirm_deduct','no_credit_notice','report_title','report_device','report_date','report_time','report_gps','report_sensors_used','report_verdict','report_close_btn','history_title','history_empty','history_clear','history_export','history_cleared','history_exported','share_title','share_native','share_copy','legal_privacy_tab','legal_terms_tab','legal_refund_tab','legal_contact_tab','legal_close_btn','print_needs_verdict','gas_safety_note','summary_good','summary_med','summary_low','ai_ready','ai_disabled','ai_training','ai_source_ai','ai_source_rules','ai_source_hybrid'];
+var T_KEYS = ['subtitle','free_label','activate','activation_code','developer','password','confirm','cancel','copied','shared','thanks','back','listen','copy','share','print','new_exam','reset','history','start_btn','measure','retry','done_btn','skip','sensor_camera','sensor_microphone','sensor_accelerometer','instr_camera','instr_microphone','instr_accelerometer','waiting','status_measuring','status_done','status_skipped','status_error','status_waiting','confidence_label','no_data','device_fridge','device_washer','device_ac','device_electric_heater','device_gas_heater','device_stove','consent_title','consent_text','consent_btn','refuse_btn','calibration_title','calibration_text','calibration_yes','calibration_no','legal','no_credits','invalid','verifying','network_error','wrong_password','location_denied','location_unavailable','location_loading','notes_title','notes_sub','notes_char','notes_mic','notes_clear','user_notes_label','write_btn','summary_btn','final_confirm_yes','final_confirm_no','sensor_count_3','sensor_count_2','sensor_count_1','sensor_count_0','confirm_deduct','no_credit_notice','report_title','report_device','report_date','report_time','report_gps','report_sensors_used','report_verdict','report_close_btn','history_title','history_empty','history_clear','history_export','history_cleared','history_exported','share_title','share_native','share_copy','legal_privacy_tab','legal_terms_tab','legal_refund_tab','legal_contact_tab','legal_close_btn','print_needs_verdict','gas_safety_note','summary_good','summary_med','summary_low','ai_ready','ai_disabled','ai_training','ai_source_ai','ai_source_rules','ai_source_hybrid','fb_correct','fb_wrong','fb_trained','fb_corrected','fb_pick','fb_thanks','fb_ai_off','fb_count_label'];
 
 function mkLang(vals){var d={};for(var i=0;i<T_KEYS.length;i++)d[T_KEYS[i]]=vals[i]||T_KEYS[i];return d;}
 
-/* ─── 3. الترجمات — 23 لغة كاملة ─── */
 var TRANSLATIONS = {};
 
 TRANSLATIONS.ar = mkLang([
@@ -483,7 +492,8 @@ TRANSLATIONS.ar = mkLang([
     '⚠️ لا يمكن للهواتف شمّ الغاز فعلياً. إذا شممت غازاً: أغلق الغاز، افتح النوافذ، لا تشغّل مفاتيح كهربائية، واخرج.',
     '✅ قياس ممتاز','⚠️ قياس متوسط','⚡ قياس محدود',
     '🧠 AI جاهز','⚪ AI معطّل','🏋️ جاري التدريب...',
-    '🔬 تحليل ذكاء اصطناعي','📐 تحليل بالقواعد','🔬🧠 تحليل هجين'
+    '🔬 تحليل ذكاء اصطناعي','📐 تحليل بالقواعد','🔬🧠 تحليل هجين',
+    'التشخيص صحيح','خطأ، ساعدني أصحح','🎓 تم التعلم من ملاحظتك','🎓 شكراً! تم التصحيح','ما هو التشخيص الصحيح؟','🎓 شكراً لك','⚠️ AI غير مفعّل','مرات التعلّم'
 ]);
 
 TRANSLATIONS.en = mkLang([
@@ -500,14 +510,15 @@ TRANSLATIONS.en = mkLang([
     '⚠️ Phones cannot smell gas. If you smell gas: shut off gas, open windows, avoid electrical switches, and leave.',
     '✅ Excellent measurement','⚠️ Average measurement','⚡ Limited measurement',
     '🧠 AI ready','⚪ AI disabled','🏋️ Training...',
-    '🔬 AI analysis','📐 Rule-based analysis','🔬🧠 Hybrid analysis'
+    '🔬 AI analysis','📐 Rule-based analysis','🔬🧠 Hybrid analysis',
+    'Diagnosis correct','Wrong, help me fix','🎓 Learned from your feedback','🎓 Thanks! Corrected','What is the correct diagnosis?','🎓 Thank you','⚠️ AI not enabled','Learning count'
 ]);
 
 TRANSLATIONS.fr = mkLang([
-    'Diagnostic Physique Intelligent pour Électroménagers','Gratuit','Activer','Code d\'activation','Mode développeur','Mot de passe','Confirmer','Annuler','Copié','Partagé','Merci','Retour','Écouter','Copier','Partager','Imprimer','Nouvelle inspection','Réinitialiser','Historique','Démarrer l\'évaluation intelligente','Mesurer','Réessayer','Fait','Ignorer',
-    '📸 Caméra','🎤 Microphone','📳 Vibration','Pointez la caméra vers l\'appareil','Placez le téléphone près de l\'appareil','Placez le téléphone sur l\'appareil','Prêt','Mesure...','Mesuré','Ignoré','Échec de mesure','Prêt','Complétude','Aucune donnée',
+    'Diagnostic Physique Intelligent','Gratuit','Activer','Code d\'activation','Mode développeur','Mot de passe','Confirmer','Annuler','Copié','Partagé','Merci','Retour','Écouter','Copier','Partager','Imprimer','Nouvelle inspection','Réinitialiser','Historique','Démarrer l\'évaluation intelligente','Mesurer','Réessayer','Fait','Ignorer',
+    '📸 Caméra','🎤 Microphone','📳 Vibration','Pointez la caméra','Placez le téléphone près','Placez le téléphone sur','Prêt','Mesure...','Mesuré','Ignoré','Échec de mesure','Prêt','Complétude','Aucune donnée',
     'Réfrigérateur','Lave-linge','Climatiseur','Chauffage Électrique','Chauffe-eau Gaz','Cuisinière',
-    'Consentement préalable','Caméra, micro et mouvement seront utilisés','J\'accepte','Refuser','Étalonnage de référence','L\'appareil est-il normal ?','Oui, comme référence','Pas maintenant',
+    'Consentement préalable','Caméra, micro et mouvement','J\'accepte','Refuser','Étalonnage','L\'appareil est-il normal ?','Oui, comme référence','Pas maintenant',
     'Estimation physique uniquement','Solde insuffisant','Code invalide','Vérification...','Échec de connexion','Mot de passe incorrect','Refusé','N/D','Localisation...',
     'Ajouter une note ?','(Optionnel)','car','🎤 Parler','🗑 Effacer','Notes :','⌨️ Écrire','Afficher le résumé intelligent','Confirmer','Annuler',
     '✅ 3/3','⚡ 2/3','⚠️ 1/3','❌ Aucun','1 crédit déduit','Crédit préservé',
@@ -517,14 +528,15 @@ TRANSLATIONS.fr = mkLang([
     '⚠️ Les téléphones ne sentent pas le gaz. Si vous sentez le gaz : coupez, ouvrez les fenêtres, évitez les interrupteurs, partez.',
     '✅ Excellente mesure','⚠️ Mesure moyenne','⚡ Mesure limitée',
     '🧠 IA prête','⚪ IA désactivée','🏋️ Entraînement...',
-    '🔬 Analyse IA','📐 Analyse par règles','🔬🧠 Analyse hybride'
+    '🔬 Analyse IA','📐 Analyse par règles','🔬🧠 Analyse hybride',
+    'Diagnostic correct','Faux, aidez-moi','🎓 Appris de votre retour','🎓 Merci ! Corrigé','Quel est le bon diagnostic ?','🎓 Merci','⚠️ IA non activée','Fois d\'apprentissage'
 ]);
 
 TRANSLATIONS.es = mkLang([
     'Diagnóstico Físico Inteligente','Gratis','Activar','Código de activación','Modo desarrollador','Contraseña','Confirmar','Cancelar','Copiado','Compartido','Gracias','Atrás','Escuchar','Copiar','Compartir','Imprimir','Nueva inspección','Reiniciar','Historial','Iniciar evaluación inteligente','Medir','Reintentar','Hecho','Omitir',
-    '📸 Cámara','🎤 Micrófono','📳 Vibración','Apunta la cámara al aparato','Coloca el teléfono cerca','Coloca el teléfono encima','Listo','Midiendo...','Medido','Omitido','Fallo de medición','Listo','Integridad','Sin datos',
+    '📸 Cámara','🎤 Micrófono','📳 Vibración','Apunta la cámara','Coloca el teléfono cerca','Coloca el teléfono encima','Listo','Midiendo...','Medido','Omitido','Fallo de medición','Listo','Integridad','Sin datos',
     'Refrigerador','Lavadora','Aire Acondicionado','Calentador Eléctrico','Calentador de Gas','Estufa',
-    'Consentimiento previo','Se usará cámara, micrófono y movimiento','Acepto y comienzo','Rechazar','Calibración de referencia','¿El aparato está normal?','Sí, como referencia','Ahora no',
+    'Consentimiento previo','Se usará cámara, micrófono y movimiento','Acepto y comienzo','Rechazar','Calibración','¿El aparato está normal?','Sí, como referencia','Ahora no',
     'Solo estimación física','Saldo insuficiente','Código inválido','Verificando...','Fallo de conexión','Contraseña incorrecta','Denegado','N/D','Localizando...',
     '¿Añadir nota?','(Opcional)','car','🎤 Hablar','🗑 Borrar','Notas:','⌨️ Escribir','Mostrar resumen inteligente','Confirmar','Cancelar',
     '✅ 3/3','⚡ 2/3','⚠️ 1/3','❌ Ninguno','1 crédito descontado','Crédito preservado',
@@ -534,14 +546,15 @@ TRANSLATIONS.es = mkLang([
     '⚠️ Los teléfonos no huelen gas. Si hueles gas: cierra, abre ventanas, evita interruptores, sal.',
     '✅ Excelente medición','⚠️ Medición media','⚡ Medición limitada',
     '🧠 IA lista','⚪ IA desactivada','🏋️ Entrenando...',
-    '🔬 Análisis IA','📐 Análisis por reglas','🔬🧠 Análisis híbrido'
+    '🔬 Análisis IA','📐 Análisis por reglas','🔬🧠 Análisis híbrido',
+    'Diagnóstico correcto','Incorrecto, ayúdame','🎓 Aprendido de tu comentario','🎓 ¡Gracias! Corregido','¿Cuál es el diagnóstico correcto?','🎓 Gracias','⚠️ IA no activada','Veces aprendidas'
 ]);
 
 TRANSLATIONS.de = mkLang([
     'Intelligente Physikalische Diagnose','Kostenlos','Aktivieren','Aktivierungscode','Entwicklermodus','Passwort','Bestätigen','Abbrechen','Kopiert','Geteilt','Danke','Zurück','Anhören','Kopieren','Teilen','Drucken','Neue Inspektion','Zurücksetzen','Verlauf','Intelligente Bewertung starten','Messen','Wiederholen','Fertig','Überspringen',
     '📸 Kamera','🎤 Mikrofon','📳 Vibration','Kamera auf Gerät richten','Telefon in die Nähe legen','Telefon auf das Gerät legen','Bereit','Messung...','Gemessen','Übersprungen','Messfehler','Bereit','Vollständigkeit','Keine Daten',
     'Kühlschrank','Waschmaschine','Klimaanlage','Elektroheizung','Gasheizung','Herd',
-    'Vorherige Zustimmung','Kamera, Mikrofon und Bewegung werden genutzt','Ich stimme zu','Ablehnen','Referenzkalibrierung','Ist das Gerät normal?','Ja, als Referenz','Nicht jetzt',
+    'Vorherige Zustimmung','Kamera, Mikrofon und Bewegung','Ich stimme zu','Ablehnen','Referenzkalibrierung','Ist das Gerät normal?','Ja, als Referenz','Nicht jetzt',
     'Nur physikalische Schätzung','Unzureichendes Guthaben','Ungültiger Code','Überprüfung...','Verbindung fehlgeschlagen','Falsches Passwort','Verweigert','N/V','Ortung...',
     'Notiz hinzufügen?','(Optional)','Zeichen','🎤 Sprechen','🗑 Löschen','Notizen:','⌨️ Schreiben','Intelligente Zusammenfassung','Bestätigen','Abbrechen',
     '✅ 3/3','⚡ 2/3','⚠️ 1/3','❌ Keine','1 Guthaben abgezogen','Guthaben erhalten',
@@ -551,14 +564,15 @@ TRANSLATIONS.de = mkLang([
     '⚠️ Telefone können kein Gas riechen. Bei Gasgeruch: abstellen, Fenster öffnen, keine Schalter, verlassen.',
     '✅ Ausgezeichnete Messung','⚠️ Durchschnittliche Messung','⚡ Begrenzte Messung',
     '🧠 KI bereit','⚪ KI deaktiviert','🏋️ Training...',
-    '🔬 KI-Analyse','📐 Regelbasierte Analyse','🔬🧠 Hybridanalyse'
+    '🔬 KI-Analyse','📐 Regelbasierte Analyse','🔬🧠 Hybridanalyse',
+    'Diagnose korrekt','Falsch, hilf mir','🎓 Aus Feedback gelernt','🎓 Danke! Korrigiert','Was ist die richtige Diagnose?','🎓 Danke','⚠️ KI nicht aktiviert','Lernanzahl'
 ]);
 
 TRANSLATIONS.it = mkLang([
     'Diagnosi Fisica Intelligente','Gratis','Attiva','Codice di attivazione','Modalità sviluppatore','Password','Conferma','Annulla','Copiato','Condiviso','Grazie','Indietro','Ascolta','Copia','Condividi','Stampa','Nuova ispezione','Reimposta','Cronologia','Avvia valutazione intelligente','Misura','Riprova','Fatto','Salta',
     '📸 Fotocamera','🎤 Microfono','📳 Vibrazione','Punta la fotocamera','Metti il telefono vicino','Metti il telefono sopra','Pronto','Misurazione...','Misurato','Saltato','Errore misura','Pronto','Completezza','Nessun dato',
     'Frigorifero','Lavatrice','Climatizzatore','Scaldabagno Elettrico','Scaldabagno a Gas','Cucina',
-    'Consenso preventivo','Fotocamera, microfono e movimento','Accetto','Rifiuta','Calibrazione di riferimento','Il dispositivo è normale?','Sì, come riferimento','Non ora',
+    'Consenso preventivo','Fotocamera, microfono e movimento','Accetto','Rifiuta','Calibrazione','Il dispositivo è normale?','Sì, come riferimento','Non ora',
     'Solo stima fisica','Saldo insufficiente','Codice non valido','Verifica...','Connessione fallita','Password errata','Negato','N/D','Localizzazione...',
     'Aggiungere una nota?','(Opzionale)','car','🎤 Parla','🗑 Cancella','Note:','⌨️ Scrivi','Mostra riepilogo intelligente','Conferma','Annulla',
     '✅ 3/3','⚡ 2/3','⚠️ 1/3','❌ Nessuno','1 credito detratto','Credito conservato',
@@ -568,14 +582,15 @@ TRANSLATIONS.it = mkLang([
     '⚠️ I telefoni non sentono il gas. Se senti gas: chiudi, apri finestre, evita interruttori, esci.',
     '✅ Misurazione eccellente','⚠️ Misurazione media','⚡ Misurazione limitata',
     '🧠 IA pronta','⚪ IA disattivata','🏋️ Addestramento...',
-    '🔬 Analisi IA','📐 Analisi a regole','🔬🧠 Analisi ibrida'
+    '🔬 Analisi IA','📐 Analisi a regole','🔬🧠 Analisi ibrida',
+    'Diagnosi corretta','Sbagliato, aiutami','🎓 Appreso dal feedback','🎓 Grazie! Corretto','Qual è la diagnosi corretta?','🎓 Grazie','⚠️ IA non attiva','Volte di apprendimento'
 ]);
 
 TRANSLATIONS.pt = mkLang([
     'Diagnóstico Físico Inteligente','Grátis','Ativar','Código de ativação','Modo desenvolvedor','Senha','Confirmar','Cancelar','Copiado','Compartilhado','Obrigado','Voltar','Ouvir','Copiar','Compartilhar','Imprimir','Nova inspeção','Redefinir','Histórico','Iniciar avaliação inteligente','Medir','Repetir','Feito','Pular',
     '📸 Câmera','🎤 Microfone','📳 Vibração','Aponte a câmera','Coloque o telefone perto','Coloque o telefone sobre','Pronto','Medindo...','Medido','Ignorado','Falha na medição','Pronto','Integridade','Sem dados',
     'Geladeira','Máquina de Lavar','Ar Condicionado','Aquecedor Elétrico','Aquecedor a Gás','Fogão',
-    'Consentimento prévio','Câmera, microfone e movimento','Aceito','Recusar','Calibração de referência','O aparelho está normal?','Sim, como referência','Agora não',
+    'Consentimento prévio','Câmera, microfone e movimento','Aceito','Recusar','Calibração','O aparelho está normal?','Sim, como referência','Agora não',
     'Apenas estimativa física','Saldo insuficiente','Código inválido','Verificando...','Falha na conexão','Senha incorreta','Negado','N/D','Localizando...',
     'Adicionar nota?','(Opcional)','car','🎤 Falar','🗑 Limpar','Notas:','⌨️ Escrever','Mostrar resumo inteligente','Confirmar','Cancelar',
     '✅ 3/3','⚡ 2/3','⚠️ 1/3','❌ Nenhum','1 crédito descontado','Crédito preservado',
@@ -585,7 +600,8 @@ TRANSLATIONS.pt = mkLang([
     '⚠️ Telefones não sentem gás. Se sentir gás: feche, abra janelas, evite interruptores, saia.',
     '✅ Medição excelente','⚠️ Medição média','⚡ Medição limitada',
     '🧠 IA pronta','⚪ IA desativada','🏋️ Treinando...',
-    '🔬 Análise IA','📐 Análise por regras','🔬🧠 Análise híbrida'
+    '🔬 Análise IA','📐 Análise por regras','🔬🧠 Análise híbrida',
+    'Diagnóstico correto','Errado, ajude-me','🎓 Aprendido do feedback','🎓 Obrigado! Corrigido','Qual é o diagnóstico correto?','🎓 Obrigado','⚠️ IA desativada','Vezes de aprendizagem'
 ]);
 
 TRANSLATIONS.ru = mkLang([
@@ -602,7 +618,8 @@ TRANSLATIONS.ru = mkLang([
     '⚠️ Телефоны не чувствуют газ. При запахе газа: перекройте, откройте окна, не включайте приборы, уходите.',
     '✅ Отличное измерение','⚠️ Среднее измерение','⚡ Ограниченное измерение',
     '🧠 ИИ готов','⚪ ИИ отключён','🏋️ Обучение...',
-    '🔬 Анализ ИИ','📐 Анализ по правилам','🔬🧠 Гибридный анализ'
+    '🔬 Анализ ИИ','📐 Анализ по правилам','🔬🧠 Гибридный анализ',
+    'Диагноз верный','Неверно, помогите','🎓 Обучено на отзыве','🎓 Спасибо! Исправлено','Какой правильный диагноз?','🎓 Спасибо','⚠️ ИИ не включён','Раз обучения'
 ]);
 
 TRANSLATIONS.zh = mkLang([
@@ -619,14 +636,15 @@ TRANSLATIONS.zh = mkLang([
     '⚠️ 手机无法闻到燃气。若闻到燃气：关闭燃气，开窗，不要触碰电器开关，离开。',
     '✅ 优秀测量','⚠️ 一般测量','⚡ 有限测量',
     '🧠 AI 就绪','⚪ AI 已禁用','🏋️ 训练中...',
-    '🔬 AI 分析','📐 规则分析','🔬🧠 混合分析'
+    '🔬 AI 分析','📐 规则分析','🔬🧠 混合分析',
+    '诊断正确','错误，帮我纠正','🎓 已从反馈学习','🎓 谢谢！已更正','正确的诊断是什么？','🎓 谢谢','⚠️ AI 未启用','学习次数'
 ]);
 
 TRANSLATIONS.ja = mkLang([
     'スマート家電物理診断','無料','アクティベート','アクティベーションコード','開発者モード','パスワード','確認','キャンセル','コピーしました','共有しました','ありがとう','戻る','読み上げ','コピー','共有','印刷','新しい検査','リセット','履歴','スマート検査を開始','測定','再試行','完了','スキップ',
     '📸 カメラ','🎤 マイク','📳 振動','カメラをデバイスに向ける','電話をデバイスの近くに置く','電話をデバイスの上に置く','準備','測定中...','測定済み','スキップ済み','測定失敗','準備','完全性','データなし',
     '冷蔵庫','洗濯機','エアコン','電気ヒーター','ガスヒーター','ストーブ',
-    '事前同意','カメラ、マイク、モーションセンサーを使用します','同意して開始','拒否','基準校正','デバイスは正常ですか？','はい、基準として','後で',
+    '事前同意','カメラ、マイク、モーションセンサーを使用','同意して開始','拒否','基準校正','デバイスは正常ですか？','はい、基準として','後で',
     '物理的評価のみ','残高不足','無効なコード','確認中...','接続失敗','パスワードエラー','拒否','N/A','位置取得中...',
     'メモを追加？','(任意)','文字','🎤 話す','🗑 クリア','ユーザーメモ:','⌨️ 入力','スマート要約を表示','確認','キャンセル',
     '✅ 3/3','⚡ 2/3','⚠️ 1/3','❌ なし','1クレジット消費','クレジット保持',
@@ -636,7 +654,8 @@ TRANSLATIONS.ja = mkLang([
     '⚠️ スマホはガスを嗅げません。ガス臭があれば：止め、窓を開け、スイッチに触れず、退去。',
     '✅ 優れた測定','⚠️ 平均的な測定','⚡ 限定的な測定',
     '🧠 AI 準備完了','⚪ AI 無効','🏋️ トレーニング中...',
-    '🔬 AI分析','📐 ルール分析','🔬🧠 ハイブリッド分析'
+    '🔬 AI分析','📐 ルール分析','🔬🧠 ハイブリッド分析',
+    '診断は正確','間違い、修正を助けて','🎓 フィードバックから学習','🎓 ありがとう！修正済み','正しい診断は？','🎓 ありがとう','⚠️ AI 未有効','学習回数'
 ]);
 
 TRANSLATIONS.ko = mkLang([
@@ -653,7 +672,8 @@ TRANSLATIONS.ko = mkLang([
     '⚠️ 스마트폰은 가스 냄새를 못 맡습니다. 가스 냄새 나면: 잠그고, 창문 열고, 스위치 만지지 말고, 나가세요.',
     '✅ 우수한 측정','⚠️ 평균 측정','⚡ 제한된 측정',
     '🧠 AI 준비','⚪ AI 비활성','🏋️ 훈련 중...',
-    '🔬 AI 분석','📐 규칙 분석','🔬🧠 하이브리드 분석'
+    '🔬 AI 분석','📐 규칙 분석','🔬🧠 하이브리드 분석',
+    '진단 정확','오류, 도와주세요','🎓 피드백에서 학습','🎓 감사합니다! 수정됨','올바른 진단은?','🎓 감사합니다','⚠️ AI 비활성','학습 횟수'
 ]);
 
 TRANSLATIONS.hi = mkLang([
@@ -670,7 +690,8 @@ TRANSLATIONS.hi = mkLang([
     '⚠️ फोन गैस नहीं सूंघ सकते। गैस सूंघें तो: बंद करें, खिड़कियाँ खोलें, स्विच न छुएँ, निकलें।',
     '✅ उत्कृष्ट माप','⚠️ औसत माप','⚡ सीमित माप',
     '🧠 AI तैयार','⚪ AI बंद','🏋️ प्रशिक्षण...',
-    '🔬 AI विश्लेषण','📐 नियम विश्लेषण','🔬🧠 हाइब्रिड विश्लेषण'
+    '🔬 AI विश्लेषण','📐 नियम विश्लेषण','🔬🧠 हाइब्रिड विश्लेषण',
+    'निदान सही','गलत, मदद करें','🎓 आपकी प्रतिक्रिया से सीखा','🎓 धन्यवाद! सुधारा','सही निदान क्या है?','🎓 धन्यवाद','⚠️ AI सक्रिय नहीं','सीखने की बार'
 ]);
 
 TRANSLATIONS.tr = mkLang([
@@ -687,14 +708,15 @@ TRANSLATIONS.tr = mkLang([
     '⚠️ Telefonlar gaz kokusunu alamaz. Gaz kokusu alırsanız: kapatın, pencereleri açın, anahtarlara dokunmayın, çıkın.',
     '✅ Mükemmel ölçüm','⚠️ Ortalama ölçüm','⚡ Sınırlı ölçüm',
     '🧠 AI hazır','⚪ AI kapalı','🏋️ Eğitim...',
-    '🔬 AI analizi','📐 Kural analizi','🔬🧠 Hibrit analiz'
+    '🔬 AI analizi','📐 Kural analizi','🔬🧠 Hibrit analiz',
+    'Teşhis doğru','Yanlış, düzeltmeme yardım et','🎓 Geri bildirimden öğrendim','🎓 Teşekkürler! Düzeltildi','Doğru teşhis nedir?','🎓 Teşekkürler','⚠️ AI aktif değil','Öğrenme sayısı'
 ]);
 
 TRANSLATIONS.id = mkLang([
     'Diagnostik Fisik Cerdas untuk Peralatan Rumah','Gratis','Aktifkan','Kode aktivasi','Mode Pengembang','Kata sandi','Konfirmasi','Batal','Disalin','Dibagikan','Terima kasih','Kembali','Dengarkan','Salin','Bagikan','Cetak','Inspeksi baru','Reset','Riwayat','Mulai inspeksi cerdas','Ukur','Coba lagi','Selesai','Lewati',
-    '📸 Kamera','🎤 Mikrofon','📳 Getaran','Arahkan kamera ke perangkat','Letakkan ponsel di dekat perangkat','Letakkan ponsel di atas perangkat','Siap','Mengukur...','Terukur','Dilewati','Pengukuran gagal','Siap','Kelengkapan','Tidak ada data',
+    '📸 Kamera','🎤 Mikrofon','📳 Getaran','Arahkan kamera ke perangkat','Letakkan ponsel di dekat','Letakkan ponsel di atas','Siap','Mengukur...','Terukur','Dilewati','Pengukuran gagal','Siap','Kelengkapan','Tidak ada data',
     'Kulkas','Mesin Cuci','AC','Pemanas Listrik','Pemanas Gas','Kompor',
-    'Persetujuan','Kamera, mikrofon dan gerakan akan digunakan','Setuju dan mulai','Tolak','Kalibrasi Referensi','Perangkat normal?','Ya, sebagai referensi','Nanti',
+    'Persetujuan','Kamera, mikrofon dan gerakan akan digunakan','Setuju dan mulai','Tolak','Kalibrasi','Perangkat normal?','Ya, sebagai referensi','Nanti',
     'Hanya estimasi fisik','Saldo tidak cukup','Kode tidak valid','Memverifikasi...','Koneksi gagal','Kata sandi salah','Ditolak','N/A','Mencari lokasi...',
     'Tambah catatan?','(Opsional)','karakter','🎤 Bicara','🗑 Hapus','Catatan pengguna:','⌨️ Tulis','Tampilkan ringkasan cerdas','Konfirmasi','Batal',
     '✅ 3/3','⚡ 2/3','⚠️ 1/3','❌ Tidak ada','1 kredit dipotong','Kredit tersimpan',
@@ -704,14 +726,15 @@ TRANSLATIONS.id = mkLang([
     '⚠️ Ponsel tidak bisa mencium gas. Jika mencium gas: matikan, buka jendela, jangan sentuh sakelar, keluar.',
     '✅ Pengukuran sangat baik','⚠️ Pengukuran rata-rata','⚡ Pengukuran terbatas',
     '🧠 AI siap','⚪ AI nonaktif','🏋️ Pelatihan...',
-    '🔬 Analisis AI','📐 Analisis aturan','🔬🧠 Analisis hibrida'
+    '🔬 Analisis AI','📐 Analisis aturan','🔬🧠 Analisis hibrida',
+    'Diagnosis benar','Salah, bantu saya','🎓 Belajar dari umpan balik','🎓 Terima kasih! Diperbaiki','Apa diagnosis yang benar?','🎓 Terima kasih','⚠️ AI tidak aktif','Jumlah pembelajaran'
 ]);
 
 TRANSLATIONS.ms = mkLang([
-    'Diagnostik Fizikal Pintar untuk Peralatan Rumah','Percuma','Aktifkan','Kod pengaktifan','Mod Pembangun','Kata laluan','Sahkan','Batal','Disalin','Dikongsi','Terima kasih','Kembali','Dengar','Salin','Kongsi','Cetak','Pemeriksaan baharu','Set semula','Sejarah','Mulakan pemeriksaan pintar','Ukur','Cuba lagi','Selesai','Langkau',
-    '📸 Kamera','🎤 Mikrofon','📳 Getaran','Arahkan kamera ke peranti','Letak telefon berhampiran','Letak telefon atas peranti','Sedia','Mengukur...','Diukur','Dilangkau','Pengukuran gagal','Sedia','Kelengkapan','Tiada data',
+    'Diagnostik Fizikal Pintar','Percuma','Aktifkan','Kod pengaktifan','Mod Pembangun','Kata laluan','Sahkan','Batal','Disalin','Dikongsi','Terima kasih','Kembali','Dengar','Salin','Kongsi','Cetak','Pemeriksaan baharu','Set semula','Sejarah','Mulakan pemeriksaan pintar','Ukur','Cuba lagi','Selesai','Langkau',
+    '📸 Kamera','🎤 Mikrofon','📳 Getaran','Arahkan kamera','Letak telefon berhampiran','Letak telefon atas','Sedia','Mengukur...','Diukur','Dilangkau','Pengukuran gagal','Sedia','Kelengkapan','Tiada data',
     'Peti Sejuk','Mesin Basuh','Penyaman Udara','Pemanas Elektrik','Pemanas Gas','Dapur',
-    'Persetujuan','Kamera, mikrofon dan gerakan akan digunakan','Setuju dan mula','Tolak','Penentukuran Rujukan','Peranti normal?','Ya, sebagai rujukan','Bukan sekarang',
+    'Persetujuan','Kamera, mikrofon dan gerakan digunakan','Setuju dan mula','Tolak','Penentukuran','Peranti normal?','Ya, sebagai rujukan','Bukan sekarang',
     'Anggaran fizikal sahaja','Baki tidak cukup','Kod tidak sah','Mengesahkan...','Sambungan gagal','Kata laluan salah','Ditolak','T/A','Mencari lokasi...',
     'Tambah nota?','(Pilihan)','aksara','🎤 Bercakap','🗑 Padam','Nota pengguna:','⌨️ Tulis','Tunjuk ringkasan pintar','Sahkan','Batal',
     '✅ 3/3','⚡ 2/3','⚠️ 1/3','❌ Tiada','1 kredit ditolak','Kredit disimpan',
@@ -721,7 +744,8 @@ TRANSLATIONS.ms = mkLang([
     '⚠️ Telefon tidak boleh menghidu gas. Jika terhidu: tutup, buka tingkap, jangan sentuh suis, keluar.',
     '✅ Pengukuran cemerlang','⚠️ Pengukuran sederhana','⚡ Pengukuran terhad',
     '🧠 AI sedia','⚪ AI dimatikan','🏋️ Latihan...',
-    '🔬 Analisis AI','📐 Analisis peraturan','🔬🧠 Analisis hibrid'
+    '🔬 Analisis AI','📐 Analisis peraturan','🔬🧠 Analisis hibrid',
+    'Diagnosis betul','Salah, bantu saya','🎓 Belajar dari maklum balas','🎓 Terima kasih! Dibetulkan','Apakah diagnosis yang betul?','🎓 Terima kasih','⚠️ AI tidak aktif','Bilangan pembelajaran'
 ]);
 
 TRANSLATIONS.vi = mkLang([
@@ -738,7 +762,8 @@ TRANSLATIONS.vi = mkLang([
     '⚠️ Điện thoại không ngửi được gas. Nếu ngửi: tắt, mở cửa sổ, đừng chạm công tắc, rời đi.',
     '✅ Đo xuất sắc','⚠️ Đo trung bình','⚡ Đo hạn chế',
     '🧠 AI sẵn sàng','⚪ AI tắt','🏋️ Đang huấn luyện...',
-    '🔬 Phân tích AI','📐 Phân tích quy tắc','🔬🧠 Phân tích lai'
+    '🔬 Phân tích AI','📐 Phân tích quy tắc','🔬🧠 Phân tích lai',
+    'Chẩn đoán đúng','Sai, giúp tôi sửa','🎓 Đã học từ phản hồi','🎓 Cảm ơn! Đã sửa','Chẩn đoán đúng là gì?','🎓 Cảm ơn','⚠️ AI chưa bật','Số lần học'
 ]);
 
 TRANSLATIONS.th = mkLang([
@@ -755,7 +780,8 @@ TRANSLATIONS.th = mkLang([
     '⚠️ โทรศัพท์ดมแก๊สไม่ได้ หากได้กลิ่นแก๊ส: ปิด เปิดหน้าต่าง อย่าแตะสวิตช์ ออก',
     '✅ การวัดยอดเยี่ยม','⚠️ การวัดปานกลาง','⚡ การวัดจำกัด',
     '🧠 AI พร้อม','⚪ AI ปิด','🏋️ กำลังฝึก...',
-    '🔬 วิเคราะห์ AI','📐 วิเคราะห์ตามกฎ','🔬🧠 วิเคราะห์ไฮบริด'
+    '🔬 วิเคราะห์ AI','📐 วิเคราะห์ตามกฎ','🔬🧠 วิเคราะห์ไฮบริด',
+    'การวินิจฉัยถูกต้อง','ผิด ช่วยแก้ไข','🎓 เรียนรู้จากข้อเสนอแนะ','🎓 ขอบคุณ! แก้ไขแล้ว','การวินิจฉัยที่ถูกต้องคือ?','🎓 ขอบคุณ','⚠️ AI ไม่เปิด','จำนวนครั้งที่เรียนรู้'
 ]);
 
 TRANSLATIONS.nl = mkLang([
@@ -772,7 +798,8 @@ TRANSLATIONS.nl = mkLang([
     '⚠️ Telefoons ruiken geen gas. Bij gaslucht: afsluiten, ramen open, geen schakelaars, weggaan.',
     '✅ Uitstekende meting','⚠️ Gemiddelde meting','⚡ Beperkte meting',
     '🧠 AI gereed','⚪ AI uit','🏋️ Training...',
-    '🔬 AI-analyse','📐 Regelanalyse','🔬🧠 Hybride analyse'
+    '🔬 AI-analyse','📐 Regelanalyse','🔬🧠 Hybride analyse',
+    'Diagnose correct','Fout, help me','🎓 Geleerd van feedback','🎓 Bedankt! Gecorrigeerd','Wat is de juiste diagnose?','🎓 Bedankt','⚠️ AI niet actief','Leerpogingen'
 ]);
 
 TRANSLATIONS.pl = mkLang([
@@ -789,7 +816,8 @@ TRANSLATIONS.pl = mkLang([
     '⚠️ Telefony nie czują gazu. Przy zapachu gazu: zakręć, otwórz okna, nie włączaj przełączników, wyjdź.',
     '✅ Doskonały pomiar','⚠️ Przeciętny pomiar','⚡ Ograniczony pomiar',
     '🧠 AI gotowe','⚪ AI wyłączone','🏋️ Trening...',
-    '🔬 Analiza AI','📐 Analiza reguł','🔬🧠 Analiza hybrydowa'
+    '🔬 Analiza AI','📐 Analiza reguł','🔬🧠 Analiza hybrydowa',
+    'Diagnoza prawidłowa','Błędna, pomóż','🎓 Nauczono z opinii','🎓 Dziękuję! Poprawiono','Jaka jest prawidłowa diagnoza?','🎓 Dziękuję','⚠️ AI nieaktywne','Liczba nauk'
 ]);
 
 TRANSLATIONS.sv = mkLang([
@@ -806,7 +834,8 @@ TRANSLATIONS.sv = mkLang([
     '⚠️ Telefoner kan inte lukta gas. Vid gaslukt: stäng av, öppna fönster, rör inga brytare, lämna.',
     '✅ Utmärkt mätning','⚠️ Genomsnittlig mätning','⚡ Begränsad mätning',
     '🧠 AI redo','⚪ AI av','🏋️ Tränar...',
-    '🔬 AI-analys','📐 Regelanalys','🔬🧠 Hybridanalys'
+    '🔬 AI-analys','📐 Regelanalys','🔬🧠 Hybridanalys',
+    'Diagnos korrekt','Fel, hjälp mig','🎓 Lärt från feedback','🎓 Tack! Korrigerat','Vad är rätt diagnos?','🎓 Tack','⚠️ AI inte aktiv','Antal inlärningar'
 ]);
 
 TRANSLATIONS.fa = mkLang([
@@ -823,7 +852,8 @@ TRANSLATIONS.fa = mkLang([
     '⚠️ تلفن‌ها بوی گاز را حس نمی‌کنند. اگر بوی گاز آمد: قطع کنید، پنجره باز، کلید را لمس نکنید، خارج شوید.',
     '✅ اندازه‌گیری عالی','⚠️ اندازه‌گیری متوسط','⚡ اندازه‌گیری محدود',
     '🧠 هوش مصنوعی آماده','⚪ هوش مصنوعی خاموش','🏋️ در حال آموزش...',
-    '🔬 تحلیل هوش مصنوعی','📐 تحلیل قانونی','🔬🧠 تحلیل ترکیبی'
+    '🔬 تحلیل هوش مصنوعی','📐 تحلیل قانونی','🔬🧠 تحلیل ترکیبی',
+    'تشخیص صحیح','اشتباه، کمکم کن','🎓 از بازخورد یاد گرفت','🎓 متشکرم! اصلاح شد','تشخیص صحیح چیست؟','🎓 متشکرم','⚠️ هوش مصنوعی فعال نیست','تعداد یادگیری'
 ]);
 
 TRANSLATIONS.ur = mkLang([
@@ -840,7 +870,8 @@ TRANSLATIONS.ur = mkLang([
     '⚠️ فون گیس نہیں سنگھ سکتے۔ گیس سنگھیں تو: بند کریں، کھڑکیاں کھولیں، سوئچ نہ چھوئیں، نکل جائیں۔',
     '✅ بہترین پیمائش','⚠️ اوسط پیمائش','⚡ محدود پیمائش',
     '🧠 AI تیار','⚪ AI بند','🏋️ تربیت...',
-    '🔬 AI تجزیہ','📐 قاعدہ تجزیہ','🔬🧠 ہائبرڈ تجزیہ'
+    '🔬 AI تجزیہ','📐 قاعدہ تجزیہ','🔬🧠 ہائبرڈ تجزیہ',
+    'تشخیص درست','غلط، میری مدد کریں','🎓 آپ کی رائے سے سیکھا','🎓 شکریہ! درست کیا','صحیح تشخیص کیا ہے؟','🎓 شکریہ','⚠️ AI فعال نہیں','سیکھنے کی بار'
 ]);
 
 TRANSLATIONS.sw = mkLang([
@@ -857,27 +888,25 @@ TRANSLATIONS.sw = mkLang([
     '⚠️ Simu haziwezi kunusa gesi. Ukinusa gesi: funga, fungua madirisha, usigusa swichi, ondoka.',
     '✅ Kipimo bora','⚠️ Kipimo cha wastani','⚡ Kipimo kikomo',
     '🧠 AI tayari','⚪ AI imezimwa','🏋️ Mafunzo...',
-    '🔬 Uchambuzi wa AI','📐 Uchambuzi wa kanuni','🔬🧠 Uchambuzi mseto'
+    '🔬 Uchambuzi wa AI','📐 Uchambuzi wa kanuni','🔬🧠 Uchambuzi mseto',
+    'Utambuzi sahihi','Makosa, nisaidie','🎓 Imejifunza kutoka maoni','🎓 Asante! Imerekebishwa','Utambuzi sahihi ni upi?','🎓 Asante','⚠️ AI haijawashwa','Idadi ya mafunzo'
 ]);
 
-/* ─── 4. ترجمة الأعطال: AR + EN كامل + قاموس مصطلحات لبقية اللغات ─── */
+/* Faults */
 var FAULT_I18N = {
-    /* Washer */
     washer_01:{ar:{n:'لا تعمل نهائياً (لا كهرباء)',s:'فحص الفيوز، القاطع، سلك الكهرباء'},en:{n:'Not working at all (no power)',s:'Check fuse, breaker, power cord'}},
     washer_02:{ar:{n:'رائحة حرق كهربائي',s:'فصل الكهرباء فوراً، فحص الأسلاك الداخلية'},en:{n:'Electrical burning smell',s:'Disconnect power immediately, check internal wires'}},
     washer_03:{ar:{n:'لا تصرف ماء',s:'تنظيف أو استبدال مضخة التصريف'},en:{n:'Not draining water',s:'Clean or replace drain pump'}},
     washer_04:{ar:{n:'لا تدخل ماء',s:'فحص صمام الدخول، فلتر المياه'},en:{n:'Not filling with water',s:'Check inlet valve, water filter'}},
     washer_05:{ar:{n:'محرك لا يدور',s:'فحص الكربونات، سير المحرك، والمكثف'},en:{n:'Motor not spinning',s:'Check carbon brushes, belt, capacitor'}},
     washer_06:{ar:{n:'توقف أثناء البرنامج',s:'فحص لوحة التحكم، حساس مستوى الماء'},en:{n:'Stops during cycle',s:'Check control board, water level sensor'}},
-    washer_07:{ar:{n:'باب لا يفتح بعد البرنامج',s:'فحص قفل الباب (سائك الباب)'},en:{n:'Door will not open after cycle',s:'Check door lock mechanism'}},
+    washer_07:{ar:{n:'باب لا يفتح بعد البرنامج',s:'فحص قفل الباب'},en:{n:'Door will not open after cycle',s:'Check door lock mechanism'}},
     washer_08:{ar:{n:'اهتزاز شديد أثناء العصر',s:'تعديل أرجل الغسالة، إعادة توزيع الغسيل'},en:{n:'Severe vibration during spin',s:'Adjust legs, redistribute load'}},
     washer_09:{ar:{n:'صوت طقطقة أو صرير',s:'فحص الرولمان، المساعدين'},en:{n:'Rattling or squeaking noise',s:'Check bearings, shock absorbers'}},
     washer_10:{ar:{n:'تسريب ماء من الأسفل',s:'فحص الخراطيم، جوانب الحلة'},en:{n:'Water leaking from bottom',s:'Check hoses, drum gaskets'}},
     washer_11:{ar:{n:'رائحة كريهة',s:'تشغيل دورة تنظيف بالخل'},en:{n:'Bad odor',s:'Run a cleaning cycle with vinegar'}},
     washer_12:{ar:{n:'لا تسخن الماء',s:'فحص عنصر التسخين، الترموستات'},en:{n:'Water not heating',s:'Check heating element, thermostat'}},
     washer_ok:{ar:{n:'الغسالة سليمة',s:'لا حاجة لأي تدخل'},en:{n:'Washing machine OK',s:'No intervention needed'}},
-
-    /* Fridge */
     fridge_01:{ar:{n:'لا تعمل نهائياً (لا كهرباء)',s:'فحص الفيوز، سلك الكهرباء'},en:{n:'Not working at all (no power)',s:'Check fuse, power cord'}},
     fridge_02:{ar:{n:'رائحة حرق كهربائي',s:'فصل الكهرباء فوراً، فحص الأسلاك الداخلية'},en:{n:'Electrical burning smell',s:'Disconnect power, check internal wires'}},
     fridge_03:{ar:{n:'ضاغط لا يعمل',s:'فحص مرحل البدء، المكثف'},en:{n:'Compressor not running',s:'Check start relay, capacitor'}},
@@ -888,11 +917,9 @@ var FAULT_I18N = {
     fridge_08:{ar:{n:'تسريب ماء من تحت الثلاجة',s:'فحص مصرف المياه، خط المياه'},en:{n:'Water leaking under fridge',s:'Check drain, water line'}},
     fridge_09:{ar:{n:'باب لا يغلق بإحكام',s:'تنظيف أو استبدال الكاونتش'},en:{n:'Door not closing tight',s:'Clean or replace gasket'}},
     fridge_10:{ar:{n:'تجمع مياه داخل الثلاجة',s:'تنظيف مصرف المياه الخلفي'},en:{n:'Water pooling inside fridge',s:'Clean rear drain'}},
-    fridge_11:{ar:{n:'صوت تقققة (تشقق جليد)',s:'طبيعي في دورة إزالة الجليد، فحص الحساس إذا كان مفرطا'},en:{n:'Cracking ice sound',s:'Normal during defrost, check sensor if excessive'}},
+    fridge_11:{ar:{n:'صوت تقققة (تشقق جليد)',s:'طبيعي في دورة إزالة الجليد'},en:{n:'Cracking ice sound',s:'Normal during defrost'}},
     fridge_12:{ar:{n:'الماء لا يخرج من باب الثلاجة',s:'فحص خط المياه، فلتر المياه'},en:{n:'Water dispenser not working',s:'Check water line, water filter'}},
     fridge_ok:{ar:{n:'الثلاجة سليمة',s:'لا حاجة لأي تدخل'},en:{n:'Refrigerator OK',s:'No intervention needed'}},
-
-    /* AC */
     ac_01:{ar:{n:'لا يعمل نهائياً (لا كهرباء)',s:'فحص الفيوز، القاطع، الربليه'},en:{n:'Not working at all (no power)',s:'Check fuse, breaker, relay'}},
     ac_02:{ar:{n:'رائحة حرق كهربائي',s:'فصل الكهرباء فوراً، فحص المكثف'},en:{n:'Electrical burning smell',s:'Disconnect power, check capacitor'}},
     ac_03:{ar:{n:'كمبروسور لا يعمل',s:'فحص المكثف، مرحل البدء'},en:{n:'Compressor not running',s:'Check capacitor, start relay'}},
@@ -906,46 +933,39 @@ var FAULT_I18N = {
     ac_11:{ar:{n:'رائحة كريهة',s:'تنظيف الفلتر والمبخر'},en:{n:'Bad odor',s:'Clean filter and evaporator'}},
     ac_12:{ar:{n:'نقص غاز التبريد (فربون)',s:'فحص التسرب، إعادة شحن الغاز'},en:{n:'Low refrigerant gas',s:'Check for leaks, recharge gas'}},
     ac_ok:{ar:{n:'المكيف سليم',s:'لا حاجة لأي تدخل'},en:{n:'Air conditioner OK',s:'No intervention needed'}},
-
-    /* Stove */
-    stove_01:{ar:{n:'رائحة غاز (تسرب)',s:'إغلاق الغاز فوراً، فتح النوافذ، استدعاء فني'},en:{n:'Gas smell (leak)',s:'Shut gas off immediately, open windows, call technician'}},
+    stove_01:{ar:{n:'رائحة غاز (تسرب)',s:'إغلاق الغاز فوراً، فتح النوافذ، استدعاء فني'},en:{n:'Gas smell (leak)',s:'Shut gas off, open windows, call technician'}},
     stove_02:{ar:{n:'لا تشتعل الشعلات نهائياً',s:'فحص وصلة الغاز، صمام الأمان'},en:{n:'Burners will not ignite',s:'Check gas connection, safety valve'}},
-    stove_03:{ar:{n:'الشعلات تشتعل وتنطفئ',s:'فحص الثرموكوبل (حساس اللهب)'},en:{n:'Burners ignite then go out',s:'Check thermocouple (flame sensor)'}},
-    stove_04:{ar:{n:'لهب أصفر أو برتقالي',s:'تنظيف فتحات الشعلة، ضبط دخول الهواء'},en:{n:'Yellow or orange flame',s:'Clean burner ports, adjust air intake'}},
-    stove_05:{ar:{n:'الفرن لا يسخن (غاز)',s:'فحص باعث اللهب (الإيثار)'},en:{n:'Oven not heating (gas)',s:'Check igniter'}},
+    stove_03:{ar:{n:'الشعلات تشتعل وتنطفئ',s:'فحص الثرموكوبل'},en:{n:'Burners ignite then go out',s:'Check thermocouple'}},
+    stove_04:{ar:{n:'لهب أصفر أو برتقالي',s:'تنظيف فتحات الشعلة، ضبط دخول الهواء'},en:{n:'Yellow or orange flame',s:'Clean burner ports, adjust air'}},
+    stove_05:{ar:{n:'الفرن لا يسخن (غاز)',s:'فحص باعث اللهب'},en:{n:'Oven not heating (gas)',s:'Check igniter'}},
     stove_06:{ar:{n:'الفرن لا يسخن (كهربائي)',s:'فحص عنصر التسخين، منظم الحرارة'},en:{n:'Oven not heating (electric)',s:'Check heating element, thermostat'}},
-    stove_07:{ar:{n:'الشعلة تشتعل بصعوبة',s:'تنظيف فتحات الشعلة، فحص الإشعال'},en:{n:'Burner difficult to ignite',s:'Clean ports, check ignition'}},
+    stove_07:{ar:{n:'الشعلة تشتعل بصعوبة',s:'تنظيف فتحات الشعلة'},en:{n:'Burner difficult to ignite',s:'Clean ports'}},
     stove_08:{ar:{n:'الفرن يشتغل ويطفي بسرعة',s:'فحص منظم الحرارة'},en:{n:'Oven shuts off quickly',s:'Check thermostat'}},
-    stove_09:{ar:{n:'تسرب غاز من الوصلة',s:'إغلاق الغاز، فحص الوصلة والخرطوم'},en:{n:'Gas leak at connection',s:'Shut gas off, check connection and hose'}},
+    stove_09:{ar:{n:'تسرب غاز من الوصلة',s:'إغلاق الغاز، فحص الوصلة'},en:{n:'Gas leak at connection',s:'Shut gas off, check connection'}},
     stove_10:{ar:{n:'تراكم دهون في الفلاتر',s:'تنظيف الفلاتر والشفاطة'},en:{n:'Grease buildup in filters',s:'Clean filters and hood'}},
     stove_ok:{ar:{n:'البوتاجاز سليم',s:'لا حاجة لأي تدخل'},en:{n:'Stove OK',s:'No intervention needed'}},
-
-    /* Electric heater */
     eh_01:{ar:{n:'لا يعمل نهائياً (لا كهرباء)',s:'فحص الفيوز، القاطع'},en:{n:'Not working at all (no power)',s:'Check fuse, breaker'}},
     eh_02:{ar:{n:'رائحة حرق كهربائي',s:'فصل الكهرباء فوراً، فحص الأسلاك'},en:{n:'Electrical burning smell',s:'Disconnect power, check wires'}},
     eh_03:{ar:{n:'لا يسخن الماء نهائياً',s:'فحص عنصر التسخين، الترموستات'},en:{n:'Water not heating at all',s:'Check heating element, thermostat'}},
     eh_04:{ar:{n:'الماء ساخن جداً',s:'فحص واستبدال منظم الحرارة'},en:{n:'Water too hot',s:'Check and replace thermostat'}},
-    eh_05:{ar:{n:'الصمام الأمني يفرغ باستمرار',s:'فحص ضغط الماء، استبدال الصمام'},en:{n:'Safety valve leaking constantly',s:'Check water pressure, replace valve'}},
+    eh_05:{ar:{n:'الصمام الأمني يفرغ باستمرار',s:'فحص ضغط الماء، استبدال الصمام'},en:{n:'Safety valve leaking constantly',s:'Check pressure, replace valve'}},
     eh_06:{ar:{n:'تسرب ماء من السخان',s:'فحص الخزان، الوصلات'},en:{n:'Water leaking from heater',s:'Check tank, connections'}},
-    eh_07:{ar:{n:'صوت طقطقة داخل السخان',s:'تصريف وتنظيف الخزان من الرواسب'},en:{n:'Crackling sound inside heater',s:'Drain and clean tank sediment'}},
+    eh_07:{ar:{n:'صوت طقطقة داخل السخان',s:'تصريف وتنظيف الخزان'},en:{n:'Crackling sound inside heater',s:'Drain and clean tank'}},
     eh_ok:{ar:{n:'السخان الكهربائي سليم',s:'لا حاجة لأي تدخل'},en:{n:'Electric heater OK',s:'No intervention needed'}},
-
-    /* Gas heater */
     gh_01:{ar:{n:'رائحة غاز (تسريب)',s:'إغلاق الغاز فوراً، فتح النوافذ، استدعاء فني'},en:{n:'Gas smell (leak)',s:'Shut gas off, open windows, call technician'}},
     gh_02:{ar:{n:'لا يوجد ماء ساخن نهائياً',s:'فحص إمداد الغاز، صمام الأمان'},en:{n:'No hot water at all',s:'Check gas supply, safety valve'}},
-    gh_03:{ar:{n:'الشعلة لا تشتغل',s:'فحص باعث اللهب (الإشعال)'},en:{n:'Burner will not ignite',s:'Check igniter'}},
-    gh_04:{ar:{n:'الشعلة تشتغل وتنطفئ',s:'فحص الثرموكوبل (حساس اللهب)'},en:{n:'Burner ignites then goes out',s:'Check thermocouple'}},
+    gh_03:{ar:{n:'الشعلة لا تشتغل',s:'فحص باعث اللهب'},en:{n:'Burner will not ignite',s:'Check igniter'}},
+    gh_04:{ar:{n:'الشعلة تشتغل وتنطفئ',s:'فحص الثرموكوبل'},en:{n:'Burner ignites then goes out',s:'Check thermocouple'}},
     gh_05:{ar:{n:'الماء ساخن جداً',s:'فحص واستبدال منظم الحرارة'},en:{n:'Water too hot',s:'Check and replace thermostat'}},
-    gh_06:{ar:{n:'صوت طقطقة داخل الخزان',s:'تصريف وتنظيف الخزان من الرواسب'},en:{n:'Crackling sound inside tank',s:'Drain and clean tank sediment'}},
+    gh_06:{ar:{n:'صوت طقطقة داخل الخزان',s:'تصريف وتنظيف الخزان'},en:{n:'Crackling sound inside tank',s:'Drain and clean tank'}},
     gh_07:{ar:{n:'تسرب ماء من الوصلات',s:'فحص الوصلات، استبدال الجوانات'},en:{n:'Water leaking from connections',s:'Check connections, replace gaskets'}},
     gh_ok:{ar:{n:'سخان الغاز سليم',s:'لا حاجة لأي تدخل'},en:{n:'Gas heater OK',s:'No intervention needed'}}
 };
 
-/* TERM_DICT: مصطلحات مختصرة لـ 21 لغة */
 var TERM_DICT = {
-    fr:{'لا تعمل نهائياً':'Ne fonctionne pas','رائحة حرق':'Odeur de brûlé','لا تصرف ماء':'Ne vidange pas','لا تدخل ماء':'Ne remplit pas','محرك':'Moteur','توقف':'Arrêt','باب':'Porte','اهتزاز':'Vibration','صوت':'Bruit','تسريب':'Fuite','رائحة كريهة':'Mauvaise odeur','لا تسخن':'Ne chauffe pas','ضاغط':'Compresseur','لا تبرد':'Ne refroidit pas','تلج':'Glace','كمبروسور':'Compresseur','المروحة':'Ventilateur','الريموت':'Télécommande','نقص غاز':'Manque de gaz','لهب':'Flamme','الفرن':'Four','الشعلات':'Brûleurs','السخان':'Chauffe-eau','صمام':'Vanne','فحص':'Vérifier','تنظيف':'Nettoyer','استبدال':'Remplacer','سليم':'Bon','كهرباء':'Électricité','ماء':'Eau'},
-    es:{'لا تعمل نهائياً':'No funciona','رائحة حرق':'Olor a quemado','لا تصرف ماء':'No drena','لا تدخل ماء':'No llena','محرك':'Motor','توقف':'Parada','باب':'Puerta','اهتزاز':'Vibración','صوت':'Ruido','تسريب':'Fuga','رائحة كريهة':'Mal olor','لا تسخن':'No calienta','ضاغط':'Compresor','لا تبرد':'No enfría','تلج':'Hielo','كمبروسور':'Compresor','المروحة':'Ventilador','الريموت':'Mando','نقص غاز':'Falta de gas','لهب':'Llama','الفرن':'Horno','الشعلات':'Quemadores','السخان':'Calentador','صمام':'Válvula','فحص':'Revisar','تنظيف':'Limpiar','استبدال':'Reemplazar','سليم':'Bien','كهرباء':'Electricidad','ماء':'Agua'},
-    de:{'لا تعمل نهائياً':'Funktioniert gar nicht','رائحة حرق':'Verbrennungsgeruch','لا تصرف ماء':'Pumpt nicht ab','لا تدخل ماء':'Füllt nicht','محرك':'Motor','توقف':'Stopp','باب':'Tür','اهتزاز':'Vibration','صوت':'Geräusch','تسريب':'Leck','رائحة كريهة':'Geruch','لا تسخن':'Heizt nicht','ضاغط':'Kompressor','لا تبرد':'Kühlt nicht','تلج':'Eis','المروحة':'Lüfter','الريموت':'Fernbedienung','نقص غاز':'Gasmangel','لهب':'Flamme','الفرن':'Ofen','الشعلات':'Brenner','السخان':'Heizung','صمام':'Ventil','فحص':'Prüfen','تنظيف':'Reinigen','استبدال':'Ersetzen','سليم':'OK','كهرباء':'Strom','ماء':'Wasser'},
+    fr:{'لا تعمل نهائياً':'Ne fonctionne pas','رائحة حرق':'Odeur de brûlé','لا تصرف ماء':'Ne vidange pas','لا تدخل ماء':'Ne remplit pas','محرك':'Moteur','توقف':'Arrêt','باب':'Porte','اهتزاز':'Vibration','صوت':'Bruit','تسريب':'Fuite','رائحة كريهة':'Mauvaise odeur','لا تسخن':'Ne chauffe pas','ضاغط':'Compresseur','لا تبرد':'Ne refroidit pas','تلج':'Glace','المروحة':'Ventilateur','الريموت':'Télécommande','نقص غاز':'Manque de gaz','لهب':'Flamme','الفرن':'Four','الشعلات':'Brûleurs','السخان':'Chauffe-eau','صمام':'Vanne','فحص':'Vérifier','تنظيف':'Nettoyer','استبدال':'Remplacer','سليم':'Bon'},
+    es:{'لا تعمل نهائياً':'No funciona','رائحة حرق':'Olor a quemado','لا تصرف ماء':'No drena','لا تدخل ماء':'No llena','محرك':'Motor','توقف':'Parada','باب':'Puerta','اهتزاز':'Vibración','صوت':'Ruido','تسريب':'Fuga','رائحة كريهة':'Mal olor','لا تسخن':'No calienta','ضاغط':'Compresor','لا تبرد':'No enfría','تلج':'Hielo','المروحة':'Ventilador','الريموت':'Mando','نقص غاز':'Falta de gas','لهب':'Llama','الفرن':'Horno','الشعلات':'Quemadores','السخان':'Calentador','صمام':'Válvula','فحص':'Revisar','تنظيف':'Limpiar','استبدال':'Reemplazar','سليم':'Bien'},
+    de:{'لا تعمل نهائياً':'Funktioniert gar nicht','رائحة حرق':'Verbrennungsgeruch','لا تصرف ماء':'Pumpt nicht ab','لا تدخل ماء':'Füllt nicht','محرك':'Motor','توقف':'Stopp','باب':'Tür','اهتزاز':'Vibration','صوت':'Geräusch','تسريب':'Leck','رائحة كريهة':'Geruch','لا تسخن':'Heizt nicht','ضاغط':'Kompressor','لا تبرد':'Kühlt nicht','تلج':'Eis','المروحة':'Lüfter','الريموت':'Fernbedienung','نقص غاز':'Gasmangel','لهب':'Flamme','الفرن':'Ofen','الشعلات':'Brenner','السخان':'Heizung','صمام':'Ventil','فحص':'Prüfen','تنظيف':'Reinigen','استبدال':'Ersetzen','سليم':'OK'},
     it:{'لا تعمل نهائياً':'Non funziona','رائحة حرق':'Odore di bruciato','لا تصرف ماء':'Non scarica','محرك':'Motore','اهتزاز':'Vibrazione','صوت':'Rumore','تسريب':'Perdita','رائحة كريهة':'Cattivo odore','لا تسخن':'Non riscalda','ضاغط':'Compressore','لا تبرد':'Non raffredda','تلج':'Ghiaccio','المروحة':'Ventola','الريموت':'Telecomando','نقص غاز':'Mancanza gas','لهب':'Fiamma','الفرن':'Forno','الشعلات':'Bruciatori','صمام':'Valvola','فحص':'Controllare','تنظيف':'Pulire','استبدال':'Sostituire','سليم':'OK'},
     pt:{'لا تعمل نهائياً':'Não funciona','رائحة حرق':'Cheiro de queimado','لا تصرف ماء':'Não drena','اهتزاز':'Vibração','صوت':'Ruído','تسريب':'Vazamento','رائحة كريهة':'Mau odor','لا تسخن':'Não aquece','ضاغط':'Compressor','لا تبرد':'Não gela','تلج':'Gelo','المروحة':'Ventilador','الريموت':'Controle','نقص غاز':'Falta de gás','لهب':'Chama','الفرن':'Forno','الشعلات':'Queimadores','صمام':'Válvula','فحص':'Verificar','تنظيف':'Limpar','استبدال':'Substituir','سليم':'OK'},
     ru:{'لا تعمل نهائياً':'Не работает','رائحة حرق':'Запах гари','لا تصرف ماء':'Не сливает','اهتزاز':'Вибрация','صوت':'Шум','تسريب':'Утечка','رائحة كريهة':'Запах','لا تسخن':'Не греет','ضاغط':'Компрессор','لا تبرد':'Не морозит','تلج':'Лёд','المروحة':'Вентилятор','الريموت':'Пульт','نقص غاز':'Нехватка газа','لهب':'Пламя','الفرن':'Печь','الشعلات':'Горелки','صمام':'Клапан','فحص':'Проверить','تنظيف':'Очистить','استبدال':'Заменить','سليم':'OK'},
@@ -966,17 +986,16 @@ var TERM_DICT = {
     sw:{'لا تعمل نهائياً':'Haifanyi kazi kabisa','رائحة حرق':'Harufu ya kuungua','اهتزاز':'Mtetemo','صوت':'Sauti','تسريب':'Uvujaji','رائحة كريهة':'Harufu mbaya','لا تسخن':'Haipashi moto','ضاغط':'Compressor','لا تبرد':'Haipoi','تلج':'Barafu','المروحة':'Feni','الريموت':'Rimoti','نقص غاز':'Upungufu wa gesi','فحص':'Angalia','تنظيف':'Safisha','استبدال':'Badilisha','سليم':'Sawa'}
 };
 
-/* ─── 5. APP_CONFIG — 60 عطلاً ─── */
-function fpBase(seed){ return { camera:{r:180+seed,g:180+seed,b:180+seed}, microphone:{freq:50+seed}, accelerometer:{mag:0.2+seed*0.01} }; }
-function fpDark(){ return { camera:{r:30,g:30,b:30}, microphone:{freq:30}, accelerometer:{mag:0.1} }; }
-function fpBurn(){ return { camera:{r:120,g:60,b:60}, microphone:{freq:150}, accelerometer:{mag:0.3} }; }
-function fpWater(){ return { camera:{r:140,g:180,b:220}, microphone:{freq:70}, accelerometer:{mag:0.3} }; }
-function fpLoud(){ return { camera:{r:200,g:200,b:200}, microphone:{freq:280}, accelerometer:{mag:2.5} }; }
-function fpVib(){ return { camera:{r:200,g:200,b:200}, microphone:{freq:120}, accelerometer:{mag:2.8} }; }
-function fpYellow(){ return { camera:{r:250,g:180,b:50}, microphone:{freq:100}, accelerometer:{mag:0.2} }; }
-function fpOK(){ return { camera:{r:220,g:220,b:220}, microphone:{freq:45}, accelerometer:{mag:0.15} }; }
-function fpQuiet(){ return { camera:{r:200,g:200,b:200}, microphone:{freq:15}, accelerometer:{mag:0.1} }; }
-function fpNormal(){ return { camera:{r:200,g:200,b:200}, microphone:{freq:60}, accelerometer:{mag:0.3} }; }
+function fpBase(seed){return{camera:{r:180+seed,g:180+seed,b:180+seed},microphone:{freq:50+seed},accelerometer:{mag:0.2+seed*0.01}};}
+function fpDark(){return{camera:{r:30,g:30,b:30},microphone:{freq:30},accelerometer:{mag:0.1}};}
+function fpBurn(){return{camera:{r:120,g:60,b:60},microphone:{freq:150},accelerometer:{mag:0.3}};}
+function fpWater(){return{camera:{r:140,g:180,b:220},microphone:{freq:70},accelerometer:{mag:0.3}};}
+function fpLoud(){return{camera:{r:200,g:200,b:200},microphone:{freq:280},accelerometer:{mag:2.5}};}
+function fpVib(){return{camera:{r:200,g:200,b:200},microphone:{freq:120},accelerometer:{mag:2.8}};}
+function fpYellow(){return{camera:{r:250,g:180,b:50},microphone:{freq:100},accelerometer:{mag:0.2}};}
+function fpOK(){return{camera:{r:220,g:220,b:220},microphone:{freq:45},accelerometer:{mag:0.15}};}
+function fpQuiet(){return{camera:{r:200,g:200,b:200},microphone:{freq:15},accelerometer:{mag:0.1}};}
+function fpNormal(){return{camera:{r:200,g:200,b:200},microphone:{freq:60},accelerometer:{mag:0.3}};}
 
 var APP_CONFIG = {
     sensors:[
@@ -1066,7 +1085,6 @@ var APP_CONFIG = {
     }
 };
 
-/* ─── 6. ترجمة العطل ─── */
 function faultT(id,field){
     var f = FAULT_I18N[id];
     if (!f) return id;
@@ -1080,7 +1098,6 @@ function faultT(id,field){
     return out === base ? f.en[field === 'solution' ? 's' : 'n'] : out;
 }
 
-/* ─── 7. دالة الترجمة العامة ─── */
 function t(key,vars){
     var dict = TRANSLATIONS[currentLang] || TRANSLATIONS.ar;
     var str = (dict && dict[key] !== undefined) ? dict[key] : (TRANSLATIONS.ar[key] || key);
@@ -1093,13 +1110,12 @@ function t(key,vars){
    ═══════════════════════════════════════════════════════════ */
 var AI_ENGINE = {
     mobilenet:null, audioModel:null, vibModel:null, fusionModel:null,
-    ready:false, loading:false,
-    NUM_CLASSES:70,
+    ready:false, loading:false, NUM_CLASSES:70,
 
     async load(){
         if (this.ready || this.loading) return this.ready;
         this.loading = true;
-        updateAIBadge('⏳ Chargement IA...','#f59e0b');
+        updateAIBadge('⏳ Loading AI...','#f59e0b');
         try {
             this.mobilenet = await mobilenet.load({version:2,alpha:0.5});
             this.audioModel = this.buildAudioModel();
@@ -1115,7 +1131,6 @@ var AI_ENGINE = {
             return false;
         } finally { this.loading = false; }
     },
-
     buildAudioModel(){
         var m = tf.sequential();
         m.add(tf.layers.conv1d({filters:32,kernelSize:3,activation:'relu',inputShape:[13,100],padding:'same'}));
@@ -1144,7 +1159,6 @@ var AI_ENGINE = {
         m.compile({optimizer:tf.train.adam(0.001),loss:'categoricalCrossentropy',metrics:['accuracy']});
         return m;
     },
-
     async extractImageFeatures(videoEl){
         if (!this.mobilenet || !videoEl) return null;
         try {
@@ -1156,7 +1170,7 @@ var AI_ENGINE = {
     },
     extractAudioFeatures(freqData,sampleRate){
         var N = 13, frames = 100;
-        if (!freqData || freqData.length === 0) return Array.from({length:N},()=>new Array(frames).fill(0));
+        if (!freqData || freqData.length === 0) return Array.from({length:N},function(){ return new Array(frames).fill(0); });
         var mfcc = [];
         for (var f = 0; f < frames; f++){
             var frame = [];
@@ -1181,7 +1195,7 @@ var AI_ENGINE = {
     normalizeVibration(samples){
         var target = 100;
         var out = [];
-        if (!samples || samples.length === 0) return Array.from({length:100},()=>[0]);
+        if (!samples || samples.length === 0) return Array.from({length:100},function(){ return [0]; });
         var maxV = Math.max.apply(null, samples.concat([0.1]));
         for (var i = 0; i < target; i++){
             var idx = Math.floor(i * samples.length / target);
@@ -1189,7 +1203,6 @@ var AI_ENGINE = {
         }
         return out;
     },
-
     async predict(features){
         if (!this.ready || !this.fusionModel) return null;
         try {
@@ -1197,12 +1210,11 @@ var AI_ENGINE = {
             var output = this.fusionModel.predict(input);
             var probs = await output.data();
             input.dispose(); output.dispose();
-            var indexed = Array.from(probs).map(function(p, i){ return {idx:i, prob:p}; });
+            var indexed = Array.from(probs).map(function(p,i){ return {idx:i, prob:p}; });
             indexed.sort(function(a,b){ return b.prob - a.prob; });
             return {top:indexed[0], top3:indexed.slice(0,3), confidence:indexed[0].prob, all:indexed};
         } catch(e){ return null; }
     },
-
     async buildFeatureVector(opts){
         var imgFeat = new Array(1280).fill(0);
         var audFeat = new Array(64).fill(0);
@@ -1231,7 +1243,6 @@ var AI_ENGINE = {
         } catch(e){ console.warn('Feature extract error:',e); }
         return imgFeat.concat(audFeat).concat(vibFeat);
     },
-
     async saveWeights(){
         try {
             await this.fusionModel.save('indexeddb://home-fusion-v1');
@@ -1261,7 +1272,6 @@ function updateAIBadge(text,color){
     el.style.color = color;
 }
 
-/* ─── Bootstrap Training ─── */
 async function bootstrapTrainAI(){
     if (!AI_ENGINE.ready){ showToast('⚠️ AI not loaded'); return; }
     updateAIBadge('🏋️ Training...','#3b82f6');
@@ -1321,13 +1331,17 @@ async function bootstrapTrainAI(){
 }
 
 function checkAIStatus(){
+    var fbCount = localStorage.getItem('homeFeedbackCount') || '0';
     var status = '🧠 AI Status:\n';
     status += '• Ready: ' + (AI_ENGINE.ready ? '✅' : '❌') + '\n';
     status += '• MobileNet: ' + (AI_ENGINE.mobilenet ? '✅' : '❌') + '\n';
     status += '• Audio Model: ' + (AI_ENGINE.audioModel ? '✅' : '❌') + '\n';
     status += '• Vib Model: ' + (AI_ENGINE.vibModel ? '✅' : '❌') + '\n';
     status += '• Fusion: ' + (AI_ENGINE.fusionModel ? '✅' : '❌') + '\n';
+    status += '• Feedback: ' + fbCount + ' 🎓';
     alert(status);
+    var fbEl = document.getElementById('fbCountDisplay');
+    if (fbEl) fbEl.textContent = fbCount;
 }
 
 function toggleAI(){
@@ -1345,9 +1359,7 @@ function toggleAI(){
     }
 }
 
-/* ═══════════════════════════════════════════════════════════
-   State
-   ═══════════════════════════════════════════════════════════ */
+/* ═════ State ═════ */
 var currentLang = localStorage.getItem('homeLang') || 'ar';
 var freeCredits = parseInt(localStorage.getItem('homeFree') || '0');
 var admin = false;
@@ -1367,6 +1379,7 @@ var historyData = [];
 var _lastImageEl = null;
 var _lastFreqData = null;
 var _lastVibSamples = [];
+var _lastFeatureVector = null;
 
 var DEVICE_KEY = 'homeDeviceId';
 var BASELINE_KEY = 'homeBaseline';
@@ -1495,6 +1508,8 @@ function attachLogoEvents(){
 }
 function openAdminModal(){
     document.getElementById('secretPassword').value = '';
+    var fbEl = document.getElementById('fbCountDisplay');
+    if (fbEl) fbEl.textContent = localStorage.getItem('homeFeedbackCount') || '0';
     document.getElementById('secretModal').classList.add('show');
     setTimeout(function(){ document.getElementById('secretPassword').focus(); },100);
 }
@@ -1555,7 +1570,8 @@ function applyTranslations(){
         ratingLabel:'thanks', shareTitle:'share_title', shareNativeLabel:'share_native',
         shareCopyLabel:'share_copy', shareCloseLabel:'legal_close_btn',
         dev_fridge:'device_fridge', dev_washer:'device_washer', dev_ac:'device_ac',
-        dev_electric_heater:'device_electric_heater', dev_gas_heater:'device_gas_heater', dev_stove:'device_stove'
+        dev_electric_heater:'device_electric_heater', dev_gas_heater:'device_gas_heater', dev_stove:'device_stove',
+        fbCorrectLabel:'fb_correct', fbWrongLabel:'fb_wrong', fbCountLabel:'fb_count_label'
     };
     for (var id in map){
         var el = document.getElementById(id);
@@ -1673,7 +1689,7 @@ function updateSummaryButton(){
     btn.disabled = (done === 0);
 }
 
-/* ═════ Sensor Measurement (Hybrid AI + Rules) ═════ */
+/* ═════ Sensor Measurement ═════ */
 async function measureSensor(sensorId){
     var st = gateStates[sensorId];
     if (!st || st.measured || st.skipped || st.isMeasuring) return;
@@ -1690,7 +1706,6 @@ async function measureSensor(sensorId){
     if (doneBtn) doneBtn.disabled = true;
     if (skipBtn) skipBtn.disabled = true;
     if (preview) preview.textContent = t('status_measuring');
-
     var reading = null;
     try {
         if (sensorId === 'camera') reading = await measureCamera();
@@ -1698,7 +1713,6 @@ async function measureSensor(sensorId){
         else reading = await measureAccelerometer();
     } catch(e){ reading = null; }
     st.isMeasuring = false;
-
     if (!reading){
         if (preview) preview.textContent = '⚠️ ' + t('status_error');
         if (result) result.textContent = '⚠️ ' + t('status_error');
@@ -1724,7 +1738,6 @@ async function measureSensor(sensorId){
     updateSensorBadge(sensorId);
     updateSummaryButton();
 }
-
 async function measureCamera(){
     try {
         var stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:320,height:240}});
@@ -1735,7 +1748,6 @@ async function measureCamera(){
         await new Promise(function(r){ video.onloadedmetadata = r; });
         await video.play();
         await new Promise(function(r){ setTimeout(r, 800); });
-
         var canvas = document.createElement('canvas');
         canvas.width = 320; canvas.height = 240;
         var ctx = canvas.getContext('2d');
@@ -1744,7 +1756,6 @@ async function measureCamera(){
         var r=0,g=0,b=0,c=0;
         for (var i = 0; i < data.length; i += 4){ r += data[i]; g += data[i+1]; b += data[i+2]; c++; }
         r = Math.round(r/c); g = Math.round(g/c); b = Math.round(b/c);
-
         _lastImageEl = video;
         var aiFeat = null;
         if (AI_ENGINE.ready){
@@ -1754,7 +1765,6 @@ async function measureCamera(){
         return {rgb:{r:r,g:g,b:b}, aiFeatures:aiFeat};
     } catch(e){ return null; }
 }
-
 async function measureMicrophone(){
     try {
         var stream = await navigator.mediaDevices.getUserMedia({audio:true});
@@ -1764,7 +1774,6 @@ async function measureMicrophone(){
         analyser.fftSize = 2048;
         var src = ctx.createMediaStreamSource(stream);
         src.connect(analyser);
-
         var freqBins = new Uint8Array(analyser.frequencyBinCount);
         var allFreq = new Float32Array(analyser.frequencyBinCount);
         var frames = 20;
@@ -1775,11 +1784,9 @@ async function measureMicrophone(){
         }
         for (var j = 0; j < allFreq.length; j++) allFreq[j] /= frames;
         _lastFreqData = Array.from(allFreq);
-
         var maxV = 0, maxI = 0;
         for (var k = 1; k < allFreq.length; k++) if (allFreq[k] > maxV){ maxV = allFreq[k]; maxI = k; }
         var freq = Math.round(maxI * ctx.sampleRate / analyser.fftSize);
-
         var aiFeat = null;
         if (AI_ENGINE.ready && AI_ENGINE.audioModel){
             var mfcc = AI_ENGINE.extractAudioFeatures(_lastFreqData, ctx.sampleRate);
@@ -1795,7 +1802,6 @@ async function measureMicrophone(){
         return {freq:freq, aiFeatures:aiFeat};
     } catch(e){ return null; }
 }
-
 async function measureAccelerometer(){
     try {
         if (!window.DeviceMotionEvent) return null;
@@ -1810,7 +1816,6 @@ async function measureAccelerometer(){
         if (samples.length < 5) return null;
         var mean = samples.reduce(function(a,b){ return a+b; }, 0) / samples.length;
         _lastVibSamples = samples;
-
         var aiFeat = null;
         if (AI_ENGINE.ready && AI_ENGINE.vibModel){
             var norm = AI_ENGINE.normalizeVibration(samples);
@@ -1823,7 +1828,6 @@ async function measureAccelerometer(){
         return {mag: Math.round(mean*100)/100, aiFeatures:aiFeat};
     } catch(e){ return null; }
 }
-
 function confirmSensor(sensorId){
     var st = gateStates[sensorId];
     if (!st || !st.measured) return;
@@ -1887,7 +1891,7 @@ function formatReading(sensorId, r){
     return '—';
 }
 
-/* ═════ Final Verdict (Hybrid) ═════ */
+/* ═════ Final Verdict (Hybrid + Feedback) ═════ */
 function getMeasuredCount(){ return APP_CONFIG.sensors.filter(function(s){ return gateStates[s.id] && gateStates[s.id].measured; }).length; }
 function getConfirmedCount(){ return APP_CONFIG.sensors.filter(function(s){ return gateStates[s.id] && gateStates[s.id].confirmed; }).length; }
 
@@ -1949,6 +1953,8 @@ async function renderFinalVerdict(){
         solDiv.style.display = 'none';
         countNotice.className = 'sensor-count-notice none';
         countNotice.textContent = t('sensor_count_0');
+        var fbRow0 = document.getElementById('feedbackRow');
+        if (fbRow0) fbRow0.style.display = 'none';
         fv.scrollIntoView({behavior:'smooth', block:'center'});
         return;
     }
@@ -1959,7 +1965,6 @@ async function renderFinalVerdict(){
     var deviceFaults = APP_CONFIG.devices[currentDeviceId].faults;
     var sensableFaults = deviceFaults.filter(function(f){ return !f.safety; });
 
-    /* Rules-based */
     var minDist = Infinity, ruleMatch = sensableFaults[0].id;
     sensableFaults.forEach(function(f){
         var dist = 0, c = 0;
@@ -1974,17 +1979,18 @@ async function renderFinalVerdict(){
         if (c > 0){ var avg = dist/c; if (avg < minDist){ minDist = avg; ruleMatch = f.id; } }
     });
 
-    /* AI-based */
     var aiMatch = null, aiConf = 0;
     if (AI_ENGINE.ready && AI_ENGINE.fusionModel){
         try {
-            var fv2 = await AI_ENGINE.buildFeatureVector({
-                imageEl: _lastImageEl,
-                freqData: _lastFreqData,
-                sampleRate: 44100,
-                vibSamples: _lastVibSamples
-            });
-            var pred = await AI_ENGINE.predict(fv2);
+            if (!_lastFeatureVector){
+                _lastFeatureVector = await AI_ENGINE.buildFeatureVector({
+                    imageEl: _lastImageEl,
+                    freqData: _lastFreqData,
+                    sampleRate: 44100,
+                    vibSamples: _lastVibSamples
+                });
+            }
+            var pred = await AI_ENGINE.predict(_lastFeatureVector);
             if (pred && pred.confidence > 0.35){
                 var deviceFaultsIdx = sensableFaults.map(function(f){ return f.id; });
                 for (var i = 0; i < pred.top3.length; i++){
@@ -1999,7 +2005,6 @@ async function renderFinalVerdict(){
         } catch(e){ console.warn('AI predict error:',e); }
     }
 
-    /* Fusion decision */
     var finalMatch, method, methodClass;
     if (aiMatch && aiConf > 0.6){
         finalMatch = aiMatch; method = t('ai_source_ai'); methodClass = 'ai';
@@ -2023,11 +2028,9 @@ async function renderFinalVerdict(){
     solDiv.style.color = level === 'high' ? '#4ade80' : level === 'medium' ? '#f5b81b' : '#fb923c';
     fv.classList.add(colorClass);
 
-    /* AI source label */
     aiSource.textContent = method + (aiConf > 0 ? ' • ' + Math.round(aiConf*100) + '%' : '');
     aiSource.className = 'ai-source ' + methodClass;
 
-    /* Gas safety */
     if (currentDeviceId === 'gas_heater' || currentDeviceId === 'stove'){
         gasNote.textContent = '⚠️ ' + t('gas_safety_note');
         gasNote.style.display = 'block';
@@ -2043,8 +2046,85 @@ async function renderFinalVerdict(){
     } else {
         document.getElementById('userNotesContainer').style.display = 'none';
     }
+
+    /* Feedback buttons visible only when confidence is uncertain */
+    var fbRow = document.getElementById('feedbackRow');
+    if (fbRow){
+        var showFb = AI_ENGINE.ready && AI_ENGINE.fusionModel && (aiConf === 0 || (aiConf > 0.2 && aiConf < 0.75));
+        fbRow.style.display = showFb ? 'flex' : 'none';
+        var fbCorrect = document.getElementById('fbCorrectLabel');
+        var fbWrong = document.getElementById('fbWrongLabel');
+        if (fbCorrect) fbCorrect.textContent = t('fb_correct');
+        if (fbWrong) fbWrong.textContent = t('fb_wrong');
+    }
+
     fv.scrollIntoView({behavior:'smooth', block:'center'});
 }
+
+/* ═════ Feedback Loop ═════ */
+async function submitFeedback(correct){
+    if (!AI_ENGINE.ready || !AI_ENGINE.fusionModel){
+        showToast(t('fb_ai_off'));
+        return;
+    }
+    if (!currentDeviceId){
+        showToast('⚠️ ' + t('no_data'));
+        return;
+    }
+    var fbRow = document.getElementById('feedbackRow');
+    if (fbRow) fbRow.style.display = 'none';
+    try {
+        if (!_lastFeatureVector){
+            _lastFeatureVector = await AI_ENGINE.buildFeatureVector({
+                imageEl: _lastImageEl,
+                freqData: _lastFreqData,
+                sampleRate: 44100,
+                vibSamples: _lastVibSamples
+            });
+        }
+        var deviceFaults = APP_CONFIG.devices[currentDeviceId].faults.filter(function(f){ return !f.safety; });
+        var faultIds = deviceFaults.map(function(f){ return f.id; });
+        if (correct){
+            var pred = await AI_ENGINE.predict(_lastFeatureVector);
+            if (pred && pred.top.idx < faultIds.length){
+                await trainAndSave(_lastFeatureVector, pred.top.idx);
+                showToast(t('fb_trained'));
+            } else {
+                showToast('⚠️ ' + t('no_data'));
+            }
+        } else {
+            var list = '';
+            for (var i = 0; i < faultIds.length; i++){
+                list += (i + 1) + '. ' + faultT(faultIds[i], 'name') + '\n';
+            }
+            var choice = prompt(t('fb_pick') + '\n\n' + list);
+            if (choice === null) return;
+            var idx = parseInt(choice, 10) - 1;
+            if (idx >= 0 && idx < faultIds.length){
+                await trainAndSave(_lastFeatureVector, idx);
+                showToast(t('fb_corrected'));
+            }
+        }
+    } catch(e){
+        console.error('Feedback error:', e);
+        showToast('⚠️ ' + t('network_error'));
+    }
+}
+async function trainAndSave(features, labelIdx){
+    try {
+        var input = tf.tensor2d([features]);
+        var label = tf.oneHot([labelIdx], AI_ENGINE.NUM_CLASSES);
+        await AI_ENGINE.fusionModel.fit(input, label, {epochs:8, batchSize:1, verbose:0});
+        input.dispose(); label.dispose();
+        await AI_ENGINE.saveWeights();
+        var count = parseInt(localStorage.getItem('homeFeedbackCount') || '0') + 1;
+        localStorage.setItem('homeFeedbackCount', count.toString());
+        console.log('🎓 Trained on feedback #' + count);
+    } catch(e){
+        console.error('trainAndSave error:', e);
+    }
+}
+
 function quickReset(){
     APP_CONFIG.sensors.forEach(function(s){
         var st = gateStates[s.id]; if (!st) return;
@@ -2073,7 +2153,7 @@ function quickReset(){
     document.getElementById('notesText').value = '';
     updateNotesUI();
     finalShown = false;
-    _lastImageEl = null; _lastFreqData = null; _lastVibSamples = [];
+    _lastImageEl = null; _lastFreqData = null; _lastVibSamples = []; _lastFeatureVector = null;
     updateSummaryButton();
     showToast('🔄 ' + t('reset'));
 }
@@ -2300,7 +2380,7 @@ function printReport(){
     html += '<div class="report-section"><h2>📋 ' + t('report_verdict') + '</h2><div class="report-verdict"><p>' + verdict + '</p></div></div>';
     if (note.length >= 4) html += '<div class="report-note">💭 ' + note + '</div>';
     html += '<div class="report-disclaimer">⚠️ ' + t('legal') + '</div>';
-    html += '<div class="report-watermark">Physics Lab Home © 2026 — AI Edition</div>';
+    html += '<div class="report-watermark">Physics Lab Home © 2026 — AI Learning Edition</div>';
     html += '<div class="report-actions">';
     html += '<button class="btn-print-pdf" onclick="window.print()">🖨️ PDF</button>';
     html += '<button class="btn-close-report" onclick="closeReport()">✖ ' + t('report_close_btn') + '</button>';
@@ -2320,7 +2400,7 @@ function switchLegalTab(tab){
     currentLegalTab = tab;
     var texts = {
         privacy:'<h4>📍 ' + t('legal_privacy_tab') + '</h4><p>All measurements and AI training happen locally on your device. No images or audio are sent to any server.</p><h4>✉️ Contact</h4><p><a href="mailto:moulkamali@gmail.com">moulkamali@gmail.com</a></p>',
-        terms:'<h4>⚠️ ' + t('legal_terms_tab') + '</h4><p>Purely physical measurement tool via phone sensors + on-device AI. Not a substitute for professional inspection.</p><h4>© Copyright</h4><p>© 2026 Physics Lab Home — AI Edition.</p>',
+        terms:'<h4>⚠️ ' + t('legal_terms_tab') + '</h4><p>Purely physical measurement tool via phone sensors + on-device AI. Not a substitute for professional inspection.</p><h4>© Copyright</h4><p>© 2026 Physics Lab Home — AI Learning Edition.</p>',
         refund:'<h4>💰 ' + t('legal_refund_tab') + '</h4><p>Digital credits. Cannot be refunded once used. Contact us for any issue.</p>',
         contact:'<h4>✉️ ' + t('legal_contact_tab') + '</h4><ul><li>📧 <a href="mailto:moulkamali@gmail.com">moulkamali@gmail.com</a></li></ul>'
     };
@@ -2382,7 +2462,6 @@ function init(){
         }
     });
 
-    /* Auto-load AI if enabled */
     if (localStorage.getItem('homeAIEnabled') === 'yes'){
         AI_ENGINE.load().then(function(ok){
             if (ok && !localStorage.getItem('homeAITrained')){
